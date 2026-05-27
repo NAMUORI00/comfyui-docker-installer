@@ -22,6 +22,9 @@ def test_expected_repository_files_exist():
         "scripts/install.sh",
         "scripts/verify.sh",
         "scripts/uninstall.sh",
+        "scripts/install.ps1",
+        "scripts/verify.ps1",
+        "scripts/uninstall.ps1",
         "scripts/tunnel.ps1",
         "README.md",
         "docs/a6000-2-preflight.md",
@@ -39,7 +42,7 @@ def test_compose_is_localhost_only_and_uses_persistent_data():
     assert "0.0.0.0:${COMFYUI_HOST_PORT" not in compose
     assert "${COMFYUI_DATA_DIR}/models:/opt/comfyui-models" in compose
     assert "./extra_model_paths.yaml:/opt/ComfyUI/extra_model_paths.yaml:ro" in compose
-    assert 'user: "${COMFYUI_UID}:${COMFYUI_GID}"' in compose
+    assert 'user: "${COMFYUI_USER_SPEC:-1000:1000}"' in compose
     assert "capabilities: [gpu]" in compose
 
 
@@ -56,9 +59,10 @@ def test_dockerfile_preserves_cuda_pytorch_and_uses_configurable_base():
 def test_env_defaults_match_a6000_2_preflight():
     env = read(".env.example")
     assert "COMFYUI_BASE_IMAGE=pytorch/pytorch:2.4.1-cuda12.1-cudnn9-runtime" in env
-    assert "COMFYUI_DATA_DIR=/home/yskim/project/comfyui-docker-installer/data" in env
-    assert "COMFYUI_UID=1005" in env
-    assert "COMFYUI_GID=1006" in env
+    assert "COMFYUI_DATA_DIR=./data" in env
+    assert "COMFYUI_UID=" in env
+    assert "COMFYUI_GID=" in env
+    assert "COMFYUI_USER_SPEC=" in env
     assert "COMFYUI_HOST_PORT=8188" in env
 
 
@@ -75,6 +79,24 @@ def test_install_script_detects_environment_and_refuses_unsafe_public_bind():
     assert "--apply-runtime-fix" in install
     assert "sudo -v" in install
     assert "sudo authentication" in install
+    assert 'data_dir="${COMFYUI_DATA_DIR:-./data}"' in install
+    assert "normalize_uid_gid" in install
+    assert "id -u" in install
+    assert "id -g" in install
+
+
+def test_windows_scripts_generate_relative_data_path_and_no_uid_gid_by_default():
+    install = read("scripts/install.ps1")
+    verify = read("scripts/verify.ps1")
+    uninstall = read("scripts/uninstall.ps1")
+    assert "$DataDir = './data'" in install
+    assert "COMFYUI_DATA_DIR=./data" in install
+    assert "COMFYUI_UID=" in install
+    assert "COMFYUI_GID=" in install
+    assert "COMFYUI_USER_SPEC=" in install
+    assert "docker compose config --quiet" in verify
+    assert "torch.cuda.is_available()" in verify
+    assert "CONFIRM_REMOVE_DATA" in uninstall
 
 
 def test_verify_script_checks_gpu_compose_packages_and_ownership():

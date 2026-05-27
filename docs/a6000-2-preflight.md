@@ -166,4 +166,4 @@ After ComfyUI is verified on this host, package the deployment as a GitHub repos
 - `docs/a6000-2-preflight.md`
 - `docs/operations.md`
 
-The package should default to `/home/yskim/comfyui-docker`, UID/GID `1005:1006`, localhost-only port binding, SSH tunnel access, and CUDA 12.1 PyTorch image for this server profile.
+The package should default to relative `./data` mounts, Linux UID/GID `1005:1006` when generated on A6000-2, localhost-only port binding, SSH tunnel access, and CUDA 12.1 PyTorch image for this server profile.

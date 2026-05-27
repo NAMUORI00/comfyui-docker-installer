@@ -15,6 +15,8 @@ This repo was first profiled against `A6000_2`, an Ubuntu 22.04 host with 3 x NV
 
 ## Quick Start On A6000-2
 
+Linux:
+
 ```bash
 cd /home/yskim/project/comfyui-docker-installer
 scripts/preflight.sh
@@ -22,9 +24,19 @@ scripts/install.sh --apply-runtime-fix
 scripts/install.sh --start
 ```
 
+Windows PowerShell with Docker Desktop:
+
+```powershell
+cd comfyui-docker-installer
+.\scripts\install.ps1 -SkipBuild
+docker compose build --pull
+.\scripts\verify.ps1
+docker compose up -d
+```
+
 If Docker's NVIDIA runtime is already configured, omit `--apply-runtime-fix`.
 
-From the local Windows machine:
+For a remote Linux server from the local Windows machine:
 
 ```powershell
 .\scripts\tunnel.ps1 -HostAlias A6000_2
@@ -86,3 +98,13 @@ CONFIRM_REMOVE_DATA=yes scripts/uninstall.sh --remove-data
 ## GitHub Packaging
 
 After the package is verified on A6000-2, this repo can be pushed to GitHub as the reusable installer package. Keep server-specific observations in `docs/a6000-2-preflight.md`; keep general behavior in `README.md`, `docs/compatibility.md`, and `docs/operations.md`.
+
+## Paths And Permissions
+
+The package defaults to relative host mounts:
+
+```dotenv
+COMFYUI_DATA_DIR=./data
+```
+
+On Linux, `scripts/install.sh` fills `COMFYUI_UID`, `COMFYUI_GID`, and `COMFYUI_USER_SPEC` from `id -u` and `id -g` so generated files are owned by the invoking user. On Windows, `scripts/install.ps1` leaves UID/GID empty and lets Compose use its safe default user spec.

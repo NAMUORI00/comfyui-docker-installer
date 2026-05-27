@@ -69,6 +69,13 @@ docker_has_nvidia_runtime() {
   docker info --format '{{json .Runtimes}}' 2>/dev/null | grep -q '"nvidia"'
 }
 
+normalize_uid_gid() {
+  local uid gid
+  uid="${COMFYUI_UID:-$(id -u)}"
+  gid="${COMFYUI_GID:-$(id -g)}"
+  printf '%s:%s\n' "$uid" "$gid"
+}
+
 ensure_nvidia_runtime() {
   if docker_has_nvidia_runtime; then
     return 0
@@ -92,12 +99,13 @@ MSG
 }
 
 write_env() {
-  local base_image uid gid bind_host data_dir
+  local base_image uid gid user_spec bind_host data_dir
   base_image="$(detect_base_image)"
   uid="$(id -u)"
   gid="$(id -g)"
+  user_spec="${COMFYUI_USER_SPEC:-$(normalize_uid_gid)}"
   bind_host="${COMFYUI_BIND_HOST:-127.0.0.1}"
-  data_dir="${COMFYUI_DATA_DIR:-${PROJECT_DIR}/data}"
+  data_dir="${COMFYUI_DATA_DIR:-./data}"
 
   if [ "$bind_host" != "127.0.0.1" ] && [ "$FORCE_PUBLIC_BIND" -ne 1 ]; then
     echo "Refusing public bind '${bind_host}'. Use --force-public-bind only with an approved auth/network plan." >&2
@@ -112,6 +120,7 @@ COMFYUI_DATA_DIR=${data_dir}
 COMFYUI_HOST_PORT=${COMFYUI_HOST_PORT:-8188}
 COMFYUI_UID=${COMFYUI_UID:-$uid}
 COMFYUI_GID=${COMFYUI_GID:-$gid}
+COMFYUI_USER_SPEC=${user_spec}
 NVIDIA_VISIBLE_DEVICES=${NVIDIA_VISIBLE_DEVICES:-all}
 EOF
 }

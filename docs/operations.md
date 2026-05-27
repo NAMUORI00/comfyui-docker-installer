@@ -19,10 +19,10 @@ Do not expose ComfyUI on `0.0.0.0:8188` unless a separate authenticated reverse 
 
 ## Persistent Data
 
-Default A6000-2 data path:
+Default data path:
 
 ```text
-/home/yskim/project/comfyui-docker-installer/data
+./data
 ```
 
 Subdirectories:
@@ -34,6 +34,8 @@ Subdirectories:
 - `user`
 
 `extra_model_paths.yaml` maps persistent models to `/opt/comfyui-models` inside the container. This avoids hiding ComfyUI's built-in `/opt/ComfyUI/models` tree.
+
+On Linux, run `scripts/install.sh` so `.env` gets the invoking user's UID/GID and `COMFYUI_USER_SPEC`. On Windows, run `scripts/install.ps1`; UID/GID fields remain empty and the Compose default is used.
 
 ## Verification
 

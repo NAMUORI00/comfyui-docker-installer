@@ -41,6 +41,13 @@ sudo nvidia-ctk runtime configure --runtime=docker
 sudo systemctl restart docker
 ```
 
+## Windows And Linux Entry Points
+
+- Linux: `scripts/install.sh`, `scripts/preflight.sh`, `scripts/verify.sh`, `scripts/uninstall.sh`
+- Windows PowerShell: `scripts/install.ps1`, `scripts/verify.ps1`, `scripts/uninstall.ps1`, `scripts/tunnel.ps1`
+
+Host data mounts default to `./data` on both platforms. Linux installation dynamically writes UID/GID values into `.env`; Windows installation leaves UID/GID blank and relies on Compose defaults.
+
 ## Docker Package Source Caveat
 
 On A6000-2, the host is Ubuntu Jammy while Docker's apt source points at Bionic. Do not upgrade Docker packages as part of this installer. Fix package sources separately if Docker upgrades are needed.
