@@ -7,6 +7,7 @@ This repo was first profiled against `A6000_2`, an Ubuntu 22.04 host with 3 x NV
 ## What It Does
 
 - Detects the host GPU/driver environment before choosing the default PyTorch CUDA image.
+- Builds ComfyUI from `COMFYUI_REF`, defaulting to latest `master` while allowing a tag or commit SHA for reproducible rebuilds.
 - Generates a local `.env` with UID/GID, data path, port, and image settings.
 - Keeps ComfyUI exposed only on `127.0.0.1:8188` by default.
 - Stores models, inputs, outputs, custom nodes, and user settings outside the container.
@@ -105,6 +106,9 @@ The package defaults to relative host mounts:
 
 ```dotenv
 COMFYUI_DATA_DIR=./data
+COMFYUI_REF=master
 ```
 
-On Linux, `scripts/install.sh` fills `COMFYUI_UID`, `COMFYUI_GID`, and `COMFYUI_USER_SPEC` from `id -u` and `id -g` so generated files are owned by the invoking user. On Windows, `scripts/install.ps1` leaves UID/GID empty and lets Compose use its safe default user spec.
+On Linux, `scripts/install.sh` fills `COMFYUI_UID`, `COMFYUI_GID`, and `COMFYUI_USER_SPEC` from `id -u` and `id -g`, creates the data directories before Docker can create them as root, and fails early if those directories are not writable. On Windows, `scripts/install.ps1` leaves UID/GID empty and lets Compose use its safe default user spec.
+
+For reproducible rebuilds, set `COMFYUI_REF` to a ComfyUI tag or commit SHA before running the installer. The default `master` tracks the latest upstream source.

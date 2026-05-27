@@ -35,7 +35,17 @@ Subdirectories:
 
 `extra_model_paths.yaml` maps persistent models to `/opt/comfyui-models` inside the container. This avoids hiding ComfyUI's built-in `/opt/ComfyUI/models` tree.
 
-On Linux, run `scripts/install.sh` so `.env` gets the invoking user's UID/GID and `COMFYUI_USER_SPEC`. On Windows, run `scripts/install.ps1`; UID/GID fields remain empty and the Compose default is used.
+On Linux, run `scripts/install.sh` so `.env` gets the invoking user's UID/GID and `COMFYUI_USER_SPEC`. The installer creates data directories before Compose starts and fails early if they are not writable. On Windows, run `scripts/install.ps1`; UID/GID fields remain empty and the Compose default is used.
+
+## Source Version
+
+Default source ref:
+
+```text
+COMFYUI_REF=master
+```
+
+This tracks latest upstream ComfyUI. For reproducible installs, set `COMFYUI_REF` to a known tag or commit SHA before building.
 
 ## Verification
 
@@ -52,7 +62,7 @@ It checks:
 - `torch.cuda.is_available()` inside the container.
 - Python package consistency through `pip check`.
 - Output file ownership.
-- No public `0.0.0.0:8188` listener.
+- No non-localhost published endpoint for port `8188`.
 
 ## Failure criteria
 

@@ -114,6 +114,7 @@ write_env() {
 
   cat > "$ENV_FILE" <<EOF
 COMFYUI_BASE_IMAGE=${COMFYUI_BASE_IMAGE:-$base_image}
+COMFYUI_REF=${COMFYUI_REF:-master}
 COMFYUI_IMAGE=${COMFYUI_IMAGE:-comfyui-a6000:local}
 COMFYUI_CONTAINER_NAME=${COMFYUI_CONTAINER_NAME:-comfyui-a6000}
 COMFYUI_DATA_DIR=${data_dir}
@@ -128,12 +129,32 @@ EOF
 create_data_dirs() {
   # shellcheck disable=SC1090
   . "$ENV_FILE"
+  local uid gid dir
+  uid="${COMFYUI_UID:-$(id -u)}"
+  gid="${COMFYUI_GID:-$(id -g)}"
   mkdir -p \
     "${COMFYUI_DATA_DIR}/models" \
     "${COMFYUI_DATA_DIR}/input" \
     "${COMFYUI_DATA_DIR}/output" \
     "${COMFYUI_DATA_DIR}/custom_nodes" \
     "${COMFYUI_DATA_DIR}/user"
+
+  if [ "$(id -u)" -eq 0 ]; then
+    chown -R "${uid}:${gid}" "${COMFYUI_DATA_DIR}"
+  fi
+
+  for dir in \
+    "${COMFYUI_DATA_DIR}/models" \
+    "${COMFYUI_DATA_DIR}/input" \
+    "${COMFYUI_DATA_DIR}/output" \
+    "${COMFYUI_DATA_DIR}/custom_nodes" \
+    "${COMFYUI_DATA_DIR}/user"; do
+    if [ ! -w "$dir" ]; then
+      echo "Data directory is not writable by the current user: $dir" >&2
+      echo "Fix ownership or rerun from an account that can write COMFYUI_DATA_DIR." >&2
+      return 1
+    fi
+  done
 }
 
 main() {

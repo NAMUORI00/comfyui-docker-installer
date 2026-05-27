@@ -43,6 +43,7 @@ def test_compose_is_localhost_only_and_uses_persistent_data():
     assert "${COMFYUI_DATA_DIR}/models:/opt/comfyui-models" in compose
     assert "./extra_model_paths.yaml:/opt/ComfyUI/extra_model_paths.yaml:ro" in compose
     assert 'user: "${COMFYUI_USER_SPEC:-1000:1000}"' in compose
+    assert "COMFYUI_REF: ${COMFYUI_REF:-master}" in compose
     assert "capabilities: [gpu]" in compose
 
 
@@ -50,6 +51,10 @@ def test_dockerfile_preserves_cuda_pytorch_and_uses_configurable_base():
     dockerfile = read("Dockerfile")
     assert "ARG COMFYUI_BASE_IMAGE=pytorch/pytorch:2.4.1-cuda12.1-cudnn9-runtime" in dockerfile
     assert "FROM ${COMFYUI_BASE_IMAGE}" in dockerfile
+    assert "ARG COMFYUI_REF=master" in dockerfile
+    assert "git checkout \"${COMFYUI_REF}\"" in dockerfile
+    assert "comfyui-build-revision" in dockerfile
+    assert "build-essential" in dockerfile
     assert "torch-constraints.txt" in dockerfile
     assert "torch.version.cuda" in dockerfile
     assert "if not torch.version.cuda:" in dockerfile
@@ -63,6 +68,7 @@ def test_dockerfile_preserves_cuda_pytorch_and_uses_configurable_base():
 def test_env_defaults_match_a6000_2_preflight():
     env = read(".env.example")
     assert "COMFYUI_BASE_IMAGE=pytorch/pytorch:2.4.1-cuda12.1-cudnn9-runtime" in env
+    assert "COMFYUI_REF=master" in env
     assert "COMFYUI_DATA_DIR=./data" in env
     assert "COMFYUI_UID=" in env
     assert "COMFYUI_GID=" in env
@@ -77,6 +83,7 @@ def test_install_script_detects_environment_and_refuses_unsafe_public_bind():
     assert "535." in install
     assert "pytorch/pytorch:2.4.1-cuda12.1-cudnn9-runtime" in install
     assert "COMFYUI_BIND_HOST" in install
+    assert "COMFYUI_REF=${COMFYUI_REF:-master}" in install
     assert "127.0.0.1" in install
     assert "Refusing public bind" in install
     assert "nvidia-ctk runtime configure --runtime=docker" in install
@@ -87,6 +94,8 @@ def test_install_script_detects_environment_and_refuses_unsafe_public_bind():
     assert "normalize_uid_gid" in install
     assert "id -u" in install
     assert "id -g" in install
+    assert "Data directory is not writable" in install
+    assert "chown -R" in install
 
 
 def test_windows_scripts_generate_relative_data_path_and_no_uid_gid_by_default():
@@ -95,6 +104,7 @@ def test_windows_scripts_generate_relative_data_path_and_no_uid_gid_by_default()
     uninstall = read("scripts/uninstall.ps1")
     assert "$DataDir = './data'" in install
     assert "COMFYUI_DATA_DIR=./data" in install
+    assert "COMFYUI_REF=" in install
     assert "COMFYUI_UID=" in install
     assert "COMFYUI_GID=" in install
     assert "COMFYUI_USER_SPEC=" in install

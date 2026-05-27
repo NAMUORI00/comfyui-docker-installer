@@ -48,6 +48,8 @@ sudo systemctl restart docker
 
 Host data mounts default to `./data` on both platforms. Linux installation dynamically writes UID/GID values into `.env`; Windows installation leaves UID/GID blank and relies on Compose defaults.
 
+`COMFYUI_REF` defaults to `master` so normal installs track latest upstream ComfyUI. Set it to a tag or commit SHA when reproducible rebuilds are more important than latest-source tracking.
+
 ## Docker Package Source Caveat
 
 On A6000-2, the host is Ubuntu Jammy while Docker's apt source points at Bionic. Do not upgrade Docker packages as part of this installer. Fix package sources separately if Docker upgrades are needed.

@@ -41,6 +41,7 @@ $dataPath = if ($env:COMFYUI_DATA_DIR) { $env:COMFYUI_DATA_DIR } else { $DataDir
 
 @"
 COMFYUI_BASE_IMAGE=$baseImage
+COMFYUI_REF=$(if ($env:COMFYUI_REF) { $env:COMFYUI_REF } else { 'master' })
 COMFYUI_IMAGE=$(if ($env:COMFYUI_IMAGE) { $env:COMFYUI_IMAGE } else { 'comfyui-a6000:local' })
 COMFYUI_CONTAINER_NAME=$(if ($env:COMFYUI_CONTAINER_NAME) { $env:COMFYUI_CONTAINER_NAME } else { 'comfyui-a6000' })
 COMFYUI_DATA_DIR=$dataPath

@@ -3,6 +3,7 @@ FROM ${COMFYUI_BASE_IMAGE}
 
 ARG COMFYUI_UID=1005
 ARG COMFYUI_GID=1006
+ARG COMFYUI_REF=master
 
 ENV DEBIAN_FRONTEND=noninteractive \
     PIP_DISABLE_PIP_VERSION_CHECK=1 \
@@ -13,6 +14,7 @@ ENV DEBIAN_FRONTEND=noninteractive \
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
       ca-certificates \
+      build-essential \
       curl \
       git \
       libgl1 \
@@ -22,7 +24,10 @@ RUN apt-get update \
       libxrender1 \
     && rm -rf /var/lib/apt/lists/*
 
-RUN git clone --depth 1 https://github.com/comfyanonymous/ComfyUI.git "${COMFYUI_DIR}" \
+RUN git clone https://github.com/comfyanonymous/ComfyUI.git "${COMFYUI_DIR}" \
+    && cd "${COMFYUI_DIR}" \
+    && git checkout "${COMFYUI_REF}" \
+    && git rev-parse HEAD > /opt/comfyui-build-revision \
     && python -m pip freeze | grep -E '^(torch|torchvision|torchaudio)==' > /tmp/torch-constraints.txt \
     && pip install --no-cache-dir -c /tmp/torch-constraints.txt -r "${COMFYUI_DIR}/requirements.txt" \
     && printf '%s\n' \

@@ -5,6 +5,7 @@ services:
       dockerfile: Dockerfile
       args:
         COMFYUI_BASE_IMAGE: ${COMFYUI_BASE_IMAGE:-pytorch/pytorch:2.4.1-cuda12.1-cudnn9-runtime}
+        COMFYUI_REF: ${COMFYUI_REF:-master}
         COMFYUI_UID: ${COMFYUI_UID:-1000}
         COMFYUI_GID: ${COMFYUI_GID:-1000}
     image: ${COMFYUI_IMAGE:-comfyui-a6000:local}
