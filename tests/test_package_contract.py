@@ -38,9 +38,12 @@ def test_expected_repository_files_exist():
         "scripts/install-custom-node-deps.ps1",
         "scripts/tunnel.ps1",
         "README.md",
+        "docs/assets/comfyui-deployment-flow.svg",
+        "docs/assets/comfyui-data-layout.svg",
         "docs/a6000-2-preflight.md",
         "docs/compatibility.md",
         "docs/operations.md",
+        "docs/paperbanana-figures.md",
         ".gitignore",
     ]
     missing = [path for path in expected if not (ROOT / path).exists()]
@@ -236,6 +239,10 @@ def test_docs_describe_failure_rollback_and_github_packaging():
     operations = read("docs/operations.md")
     compatibility = read("docs/compatibility.md")
     combined = "\n".join([readme, operations, compatibility])
+    assert "한국어 메인 / English sub notes" in readme
+    assert "![ComfyUI Docker deployment flow](docs/assets/comfyui-deployment-flow.svg)" in readme
+    assert "![ComfyUI persistent data layout](docs/assets/comfyui-data-layout.svg)" in readme
+    assert "PaperBanana-style figure notes" in readme
     for phrase in [
         "Failure criteria",
         "Rollback",
@@ -250,6 +257,24 @@ def test_docs_describe_failure_rollback_and_github_packaging():
         "CUDA 13",
     ]:
         assert phrase in combined
+
+
+def test_paperbanana_figure_assets_are_faithful_to_compose_contract():
+    deployment = read("docs/assets/comfyui-deployment-flow.svg")
+    data_layout = read("docs/assets/comfyui-data-layout.svg")
+    notes = read("docs/paperbanana-figures.md")
+    assert "0.0.0.0:8188" in deployment
+    assert "comfyui:8188" in deployment
+    assert "Basic Auth" in deployment
+    assert "./data" in deployment
+    assert "3 GPUs detected" in deployment
+    assert "/opt/comfyui-models" in data_layout
+    assert "/opt/ComfyUI/custom_nodes" in data_layout
+    assert "/opt/comfyui-python" in data_layout
+    assert "/etc/caddy/Caddyfile" in data_layout
+    assert "auth.hash" in data_layout
+    assert "PaperBanana-style Codex workflow" in notes
+    assert "path-label typo" in notes
 
 
 def test_shell_scripts_have_valid_syntax_and_executable_bits():
