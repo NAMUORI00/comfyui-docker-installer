@@ -30,10 +30,7 @@ Require-Command docker
 Require-Command nvidia-smi
 docker compose version | Out-Null
 
-$bindHost = if ($env:COMFYUI_BIND_HOST) { $env:COMFYUI_BIND_HOST } else { '127.0.0.1' }
-if ($bindHost -ne '127.0.0.1' -and -not $ForcePublicBind) {
-    throw "Refusing public bind '$bindHost'. Use -ForcePublicBind only with an approved auth/network plan."
-}
+$bindHost = if ($env:COMFYUI_BIND_HOST) { $env:COMFYUI_BIND_HOST } else { '0.0.0.0' }
 
 $baseImage = if ($env:COMFYUI_BASE_IMAGE) { $env:COMFYUI_BASE_IMAGE } else { Detect-BaseImage }
 $dataPath = if ($env:COMFYUI_DATA_DIR) { $env:COMFYUI_DATA_DIR } else { $DataDir }
@@ -45,6 +42,7 @@ COMFYUI_REF=$(if ($env:COMFYUI_REF) { $env:COMFYUI_REF } else { 'master' })
 COMFYUI_IMAGE=$(if ($env:COMFYUI_IMAGE) { $env:COMFYUI_IMAGE } else { 'comfyui-a6000:local' })
 COMFYUI_CONTAINER_NAME=$(if ($env:COMFYUI_CONTAINER_NAME) { $env:COMFYUI_CONTAINER_NAME } else { 'comfyui-a6000' })
 COMFYUI_DATA_DIR=$dataPath
+COMFYUI_BIND_HOST=$bindHost
 COMFYUI_HOST_PORT=$(if ($env:COMFYUI_HOST_PORT) { $env:COMFYUI_HOST_PORT } else { '8188' })
 COMFYUI_UID=
 COMFYUI_GID=

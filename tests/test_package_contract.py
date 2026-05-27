@@ -36,10 +36,9 @@ def test_expected_repository_files_exist():
     assert missing == []
 
 
-def test_compose_is_localhost_only_and_uses_persistent_data():
+def test_compose_is_lan_accessible_by_default_and_uses_persistent_data():
     compose = read("compose.yaml")
-    assert '"127.0.0.1:${COMFYUI_HOST_PORT:-8188}:8188"' in compose
-    assert "0.0.0.0:${COMFYUI_HOST_PORT" not in compose
+    assert '"${COMFYUI_BIND_HOST:-0.0.0.0}:${COMFYUI_HOST_PORT:-8188}:8188"' in compose
     assert "${COMFYUI_DATA_DIR}/models:/opt/comfyui-models" in compose
     assert "./extra_model_paths.yaml:/opt/ComfyUI/extra_model_paths.yaml:ro" in compose
     assert 'user: "${COMFYUI_USER_SPEC:-1000:1000}"' in compose
@@ -70,13 +69,14 @@ def test_env_defaults_match_a6000_2_preflight():
     assert "COMFYUI_BASE_IMAGE=pytorch/pytorch:2.4.1-cuda12.1-cudnn9-runtime" in env
     assert "COMFYUI_REF=master" in env
     assert "COMFYUI_DATA_DIR=./data" in env
+    assert "COMFYUI_BIND_HOST=0.0.0.0" in env
     assert "COMFYUI_UID=" in env
     assert "COMFYUI_GID=" in env
     assert "COMFYUI_USER_SPEC=" in env
     assert "COMFYUI_HOST_PORT=8188" in env
 
 
-def test_install_script_detects_environment_and_refuses_unsafe_public_bind():
+def test_install_script_detects_environment_and_writes_lan_bind_default():
     install = read("scripts/install.sh")
     assert "detect_base_image" in install
     assert "nvidia-smi" in install
@@ -84,8 +84,8 @@ def test_install_script_detects_environment_and_refuses_unsafe_public_bind():
     assert "pytorch/pytorch:2.4.1-cuda12.1-cudnn9-runtime" in install
     assert "COMFYUI_BIND_HOST" in install
     assert "COMFYUI_REF=${COMFYUI_REF:-master}" in install
-    assert "127.0.0.1" in install
-    assert "Refusing public bind" in install
+    assert "COMFYUI_BIND_HOST=${bind_host}" in install
+    assert "bind_host=\"${COMFYUI_BIND_HOST:-0.0.0.0}\"" in install
     assert "nvidia-ctk runtime configure --runtime=docker" in install
     assert "--apply-runtime-fix" in install
     assert "sudo -v" in install
@@ -104,6 +104,8 @@ def test_windows_scripts_generate_relative_data_path_and_no_uid_gid_by_default()
     uninstall = read("scripts/uninstall.ps1")
     assert "$DataDir = './data'" in install
     assert "COMFYUI_DATA_DIR=./data" in install
+    assert "COMFYUI_BIND_HOST=$bindHost" in install
+    assert "'0.0.0.0'" in install
     assert "COMFYUI_REF=" in install
     assert "COMFYUI_UID=" in install
     assert "COMFYUI_GID=" in install
@@ -122,7 +124,8 @@ def test_verify_script_checks_gpu_compose_packages_and_ownership():
     assert "docker compose --env-file \"$ENV_FILE\" ps --format json" in verify
     assert "command -v python3" in verify
     assert "PUBLISHED_JSON" in verify
-    assert "not localhost-only" in verify
+    assert "COMFYUI_BIND_HOST" in verify
+    assert "published endpoint does not match" in verify
 
 
 def test_docs_describe_failure_rollback_and_github_packaging():

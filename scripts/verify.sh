@@ -47,7 +47,7 @@ if [ -n "$published_json" ]; then
     echo "python3 or python is required to validate Docker Compose published ports." >&2
     exit 1
   fi
-  COMFYUI_HOST_PORT="${COMFYUI_HOST_PORT:-8188}" PUBLISHED_JSON="$published_json" "$PYTHON_BIN" - <<'PY'
+  COMFYUI_BIND_HOST="${COMFYUI_BIND_HOST:-0.0.0.0}" COMFYUI_HOST_PORT="${COMFYUI_HOST_PORT:-8188}" PUBLISHED_JSON="$published_json" "$PYTHON_BIN" - <<'PY'
 import json
 import os
 
@@ -64,7 +64,7 @@ if isinstance(services, dict):
     services = [services]
 
 expected_port = str(os.environ["COMFYUI_HOST_PORT"])
-allowed_hosts = {"127.0.0.1", "::1", "localhost"}
+expected_host = os.environ["COMFYUI_BIND_HOST"]
 bad_publishers = []
 
 for service in services:
@@ -73,12 +73,18 @@ for service in services:
         target_port = str(publisher.get("TargetPort", ""))
         if published_port == expected_port or target_port == "8188":
             host = publisher.get("URL") or ""
-            if host not in allowed_hosts:
+            if expected_host == "0.0.0.0":
+                host_matches = host in {"", "0.0.0.0", "::"}
+            elif expected_host == "127.0.0.1":
+                host_matches = host in {"127.0.0.1", "localhost"}
+            else:
+                host_matches = host == expected_host
+            if not host_matches:
                 bad_publishers.append(f"{host}:{published_port}->{target_port}")
 
 if bad_publishers:
     raise SystemExit(
-        "ComfyUI is not localhost-only; unexpected published endpoint(s): "
+        f"ComfyUI published endpoint does not match COMFYUI_BIND_HOST={expected_host}: "
         + ", ".join(bad_publishers)
     )
 PY

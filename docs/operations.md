@@ -1,21 +1,27 @@
 # Operations
 
-## Security Exposure
+## Network Exposure
 
-ComfyUI is bound to localhost only:
+ComfyUI is bound to all host interfaces by default so internal network clients can connect:
 
 ```yaml
 ports:
-  - "127.0.0.1:${COMFYUI_HOST_PORT:-8188}:8188"
+  - "${COMFYUI_BIND_HOST:-0.0.0.0}:${COMFYUI_HOST_PORT:-8188}:8188"
 ```
 
-Use an SSH tunnel:
+On A6000-2, open:
+
+```text
+http://172.18.102.9:8188
+```
+
+For localhost-only access, set `COMFYUI_BIND_HOST=127.0.0.1` in `.env` and use an SSH tunnel:
 
 ```bash
 ssh -N -L 8188:127.0.0.1:8188 A6000_2
 ```
 
-Do not expose ComfyUI on `0.0.0.0:8188` unless a separate authenticated reverse proxy or private network plan is approved.
+Do not expose this port outside the trusted internal network without an authenticated reverse proxy or firewall rule.
 
 ## Persistent Data
 
@@ -62,7 +68,7 @@ It checks:
 - `torch.cuda.is_available()` inside the container.
 - Python package consistency through `pip check`.
 - Output file ownership.
-- No non-localhost published endpoint for port `8188`.
+- Published endpoint for port `8188` matches `COMFYUI_BIND_HOST`.
 
 ## Failure criteria
 

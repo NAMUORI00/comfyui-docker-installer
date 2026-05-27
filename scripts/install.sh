@@ -16,7 +16,7 @@ Options:
   --apply-runtime-fix   Run sudo nvidia-ctk runtime configure --runtime=docker and restart Docker if needed.
   --start               Start ComfyUI after a successful build and verification.
   --skip-build          Generate configuration and directories without building the image.
-  --force-public-bind   Allow COMFYUI_BIND_HOST values other than 127.0.0.1. Not recommended.
+  --force-public-bind   Deprecated compatibility flag; LAN binding is the default.
   -h, --help            Show this help.
 USAGE
 }
@@ -104,13 +104,8 @@ write_env() {
   uid="$(id -u)"
   gid="$(id -g)"
   user_spec="${COMFYUI_USER_SPEC:-$(normalize_uid_gid)}"
-  bind_host="${COMFYUI_BIND_HOST:-127.0.0.1}"
+  bind_host="${COMFYUI_BIND_HOST:-0.0.0.0}"
   data_dir="${COMFYUI_DATA_DIR:-./data}"
-
-  if [ "$bind_host" != "127.0.0.1" ] && [ "$FORCE_PUBLIC_BIND" -ne 1 ]; then
-    echo "Refusing public bind '${bind_host}'. Use --force-public-bind only with an approved auth/network plan." >&2
-    return 1
-  fi
 
   cat > "$ENV_FILE" <<EOF
 COMFYUI_BASE_IMAGE=${COMFYUI_BASE_IMAGE:-$base_image}
@@ -118,6 +113,7 @@ COMFYUI_REF=${COMFYUI_REF:-master}
 COMFYUI_IMAGE=${COMFYUI_IMAGE:-comfyui-a6000:local}
 COMFYUI_CONTAINER_NAME=${COMFYUI_CONTAINER_NAME:-comfyui-a6000}
 COMFYUI_DATA_DIR=${data_dir}
+COMFYUI_BIND_HOST=${bind_host}
 COMFYUI_HOST_PORT=${COMFYUI_HOST_PORT:-8188}
 COMFYUI_UID=${COMFYUI_UID:-$uid}
 COMFYUI_GID=${COMFYUI_GID:-$gid}

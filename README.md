@@ -9,7 +9,7 @@ This repo was first profiled against `A6000_2`, an Ubuntu 22.04 host with 3 x NV
 - Detects the host GPU/driver environment before choosing the default PyTorch CUDA image.
 - Builds ComfyUI from `COMFYUI_REF`, defaulting to latest `master` while allowing a tag or commit SHA for reproducible rebuilds.
 - Generates a local `.env` with UID/GID, data path, port, and image settings.
-- Keeps ComfyUI exposed only on `127.0.0.1:8188` by default.
+- Exposes ComfyUI on `0.0.0.0:8188` by default so hosts on the internal network can connect.
 - Stores models, inputs, outputs, custom nodes, and user settings outside the container.
 - Uses `extra_model_paths.yaml` so persistent models do not hide ComfyUI's built-in model directory.
 - Verifies CUDA, Docker Compose config, Python package consistency, and output ownership.
@@ -37,16 +37,10 @@ docker compose up -d
 
 If Docker's NVIDIA runtime is already configured, omit `--apply-runtime-fix`.
 
-For a remote Linux server from the local Windows machine:
-
-```powershell
-.\scripts\tunnel.ps1 -HostAlias A6000_2
-```
-
 Open:
 
 ```text
-http://127.0.0.1:8188
+http://172.18.102.9:8188
 ```
 
 ## Manual Workflow
@@ -59,7 +53,7 @@ scripts/verify.sh
 docker compose up -d
 ```
 
-Then connect through:
+For localhost-only access instead, set `COMFYUI_BIND_HOST=127.0.0.1` and connect through:
 
 ```bash
 ssh -N -L 8188:127.0.0.1:8188 A6000_2
@@ -73,7 +67,7 @@ Stop and inspect before continuing if:
 - `torch.cuda.is_available()` is not `True` inside the container.
 - Docker daemon restart is not approved or fails.
 - Port `8188` is already used by another service.
-- ComfyUI requires direct public exposure to be usable.
+- Internal network firewall policy does not allow direct access to `8188`.
 - The selected PyTorch/CUDA image is incompatible with the host driver.
 
 ## Rollback
@@ -106,6 +100,7 @@ The package defaults to relative host mounts:
 
 ```dotenv
 COMFYUI_DATA_DIR=./data
+COMFYUI_BIND_HOST=0.0.0.0
 COMFYUI_REF=master
 ```
 
