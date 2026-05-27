@@ -109,8 +109,10 @@ def test_verify_script_checks_gpu_compose_packages_and_ownership():
     assert "docker compose config --quiet" in verify
     assert "pip check" in verify
     assert ".ownership-check" in verify
-    assert "ss -ltnp" in verify
-    assert "0.0.0.0" in verify
+    assert "docker compose --env-file \"$ENV_FILE\" ps --format json" in verify
+    assert "command -v python3" in verify
+    assert "PUBLISHED_JSON" in verify
+    assert "not localhost-only" in verify
 
 
 def test_docs_describe_failure_rollback_and_github_packaging():
