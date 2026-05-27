@@ -34,6 +34,7 @@ RUN git clone --depth 1 https://github.com/comfyanonymous/ComfyUI.git "${COMFYUI
       > /tmp/check_torch_cuda.py \
     && python /tmp/check_torch_cuda.py \
     && rm /tmp/check_torch_cuda.py \
+    && pip install --no-cache-dir --upgrade ninja \
     && pip check \
     && mkdir -p "${COMFYUI_DIR}/user" \
     && chown -R "${COMFYUI_UID}:${COMFYUI_GID}" "${COMFYUI_DIR}"

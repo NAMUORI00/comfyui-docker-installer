@@ -55,6 +55,7 @@ def test_dockerfile_preserves_cuda_pytorch_and_uses_configurable_base():
     assert "if not torch.version.cuda:" in dockerfile
     assert "raise SystemExit" in dockerfile
     assert "else None" not in dockerfile
+    assert "pip install --no-cache-dir --upgrade ninja" in dockerfile
     assert "pip check" in dockerfile
     assert "USER ${COMFYUI_UID}:${COMFYUI_GID}" in dockerfile
 
