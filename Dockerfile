@@ -25,7 +25,15 @@ RUN apt-get update \
 RUN git clone --depth 1 https://github.com/comfyanonymous/ComfyUI.git "${COMFYUI_DIR}" \
     && python -m pip freeze | grep -E '^(torch|torchvision|torchaudio)==' > /tmp/torch-constraints.txt \
     && pip install --no-cache-dir -c /tmp/torch-constraints.txt -r "${COMFYUI_DIR}/requirements.txt" \
-    && python -c "import torch; print('torch', torch.__version__); print('torch_cuda', torch.version.cuda); raise SystemExit('CUDA build of PyTorch is required but torch.version.cuda is empty') if not torch.version.cuda else None" \
+    && printf '%s\n' \
+      'import torch' \
+      'print("torch", torch.__version__)' \
+      'print("torch_cuda", torch.version.cuda)' \
+      'if not torch.version.cuda:' \
+      '    raise SystemExit("CUDA build of PyTorch is required but torch.version.cuda is empty")' \
+      > /tmp/check_torch_cuda.py \
+    && python /tmp/check_torch_cuda.py \
+    && rm /tmp/check_torch_cuda.py \
     && pip check \
     && mkdir -p "${COMFYUI_DIR}/user" \
     && chown -R "${COMFYUI_UID}:${COMFYUI_GID}" "${COMFYUI_DIR}"

@@ -52,6 +52,9 @@ def test_dockerfile_preserves_cuda_pytorch_and_uses_configurable_base():
     assert "FROM ${COMFYUI_BASE_IMAGE}" in dockerfile
     assert "torch-constraints.txt" in dockerfile
     assert "torch.version.cuda" in dockerfile
+    assert "if not torch.version.cuda:" in dockerfile
+    assert "raise SystemExit" in dockerfile
+    assert "else None" not in dockerfile
     assert "pip check" in dockerfile
     assert "USER ${COMFYUI_UID}:${COMFYUI_GID}" in dockerfile
 
