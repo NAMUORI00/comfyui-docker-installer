@@ -2,11 +2,16 @@
 
 ## Network Exposure
 
-ComfyUI is bound to all host interfaces by default so internal network clients can connect:
+Only Caddy is bound to host interfaces by default. ComfyUI is reachable only on the Docker internal network:
 
 ```yaml
-ports:
-  - "${COMFYUI_BIND_HOST:-0.0.0.0}:${COMFYUI_HOST_PORT:-8188}:8188"
+caddy:
+  ports:
+    - "${COMFYUI_BIND_HOST:-0.0.0.0}:${COMFYUI_HOST_PORT:-8188}:8188"
+
+comfyui:
+  expose:
+    - "8188"
 ```
 
 On A6000-2, open:
@@ -15,13 +20,17 @@ On A6000-2, open:
 http://172.18.102.9:8188
 ```
 
-For localhost-only access, set `COMFYUI_BIND_HOST=127.0.0.1` in `.env` and use an SSH tunnel:
+The browser prompts for Basic Auth before ComfyUI loads. Default username is `yskim`; set `CADDY_AUTH_USER` before running the installer to change it. The installer stores only the Caddy password hash in `data/caddy/auth.hash`.
+
+For localhost-only Caddy access, set `COMFYUI_BIND_HOST=127.0.0.1` in `.env` and use an SSH tunnel:
 
 ```bash
 ssh -N -L 8188:127.0.0.1:8188 A6000_2
 ```
 
 Do not expose this port outside the trusted internal network without an authenticated reverse proxy or firewall rule.
+
+HTTP Basic Auth does not encrypt credentials over plain HTTP. For credential confidentiality, add HTTPS, VPN, or SSO.
 
 ## Persistent Data
 
@@ -69,6 +78,7 @@ It checks:
 - Python package consistency through `pip check`.
 - Output file ownership.
 - Published endpoint for port `8188` matches `COMFYUI_BIND_HOST`.
+- ComfyUI is not directly published; only the `caddy` service may publish port `8188`.
 
 ## Failure criteria
 

@@ -99,13 +99,14 @@ MSG
 }
 
 write_env() {
-  local base_image uid gid user_spec bind_host data_dir
+  local base_image uid gid user_spec bind_host data_dir auth_user
   base_image="$(detect_base_image)"
   uid="$(id -u)"
   gid="$(id -g)"
   user_spec="${COMFYUI_USER_SPEC:-$(normalize_uid_gid)}"
   bind_host="${COMFYUI_BIND_HOST:-0.0.0.0}"
   data_dir="${COMFYUI_DATA_DIR:-./data}"
+  auth_user="${CADDY_AUTH_USER:-yskim}"
 
   cat > "$ENV_FILE" <<EOF
 COMFYUI_BASE_IMAGE=${COMFYUI_BASE_IMAGE:-$base_image}
@@ -115,6 +116,8 @@ COMFYUI_CONTAINER_NAME=${COMFYUI_CONTAINER_NAME:-comfyui-a6000}
 COMFYUI_DATA_DIR=${data_dir}
 COMFYUI_BIND_HOST=${bind_host}
 COMFYUI_HOST_PORT=${COMFYUI_HOST_PORT:-8188}
+CADDY_CONTAINER_NAME=${CADDY_CONTAINER_NAME:-comfyui-caddy}
+CADDY_AUTH_USER=${auth_user}
 COMFYUI_UID=${COMFYUI_UID:-$uid}
 COMFYUI_GID=${COMFYUI_GID:-$gid}
 COMFYUI_USER_SPEC=${user_spec}
@@ -133,7 +136,8 @@ create_data_dirs() {
     "${COMFYUI_DATA_DIR}/input" \
     "${COMFYUI_DATA_DIR}/output" \
     "${COMFYUI_DATA_DIR}/custom_nodes" \
-    "${COMFYUI_DATA_DIR}/user"
+    "${COMFYUI_DATA_DIR}/user" \
+    "${COMFYUI_DATA_DIR}/caddy"
 
   if [ "$(id -u)" -eq 0 ]; then
     chown -R "${uid}:${gid}" "${COMFYUI_DATA_DIR}"
@@ -144,13 +148,61 @@ create_data_dirs() {
     "${COMFYUI_DATA_DIR}/input" \
     "${COMFYUI_DATA_DIR}/output" \
     "${COMFYUI_DATA_DIR}/custom_nodes" \
-    "${COMFYUI_DATA_DIR}/user"; do
+    "${COMFYUI_DATA_DIR}/user" \
+    "${COMFYUI_DATA_DIR}/caddy"; do
     if [ ! -w "$dir" ]; then
       echo "Data directory is not writable by the current user: $dir" >&2
       echo "Fix ownership or rerun from an account that can write COMFYUI_DATA_DIR." >&2
       return 1
     fi
   done
+}
+
+read_auth_password() {
+  if [ -n "${CADDY_AUTH_PASSWORD:-}" ]; then
+    printf '%s' "$CADDY_AUTH_PASSWORD"
+    return 0
+  fi
+
+  if [ ! -t 0 ]; then
+    echo "Missing CADDY_AUTH_PASSWORD and no interactive terminal is available to read it." >&2
+    return 1
+  fi
+
+  local password
+  read -r -s -p "Caddy Basic Auth password for ${CADDY_AUTH_USER:-yskim}: " password
+  printf '\n' >&2
+  printf '%s' "$password"
+}
+
+write_caddy_config() {
+  # shellcheck disable=SC1090
+  . "$ENV_FILE"
+  local auth_user auth_hash_file caddyfile auth_hash password
+  auth_user="${CADDY_AUTH_USER:-yskim}"
+  auth_hash_file="${COMFYUI_DATA_DIR}/caddy/auth.hash"
+  caddyfile="${COMFYUI_DATA_DIR}/caddy/Caddyfile"
+
+  if [ "${CADDY_AUTH_RESET:-no}" = "yes" ] || [ ! -s "$auth_hash_file" ]; then
+    password="$(read_auth_password)"
+    if [ -z "$password" ]; then
+      echo "Caddy Basic Auth password cannot be empty." >&2
+      return 1
+    fi
+    printf '%s\n' "$password" | docker run --rm -i caddy:2-alpine caddy hash-password --algorithm bcrypt > "$auth_hash_file"
+    chmod 600 "$auth_hash_file"
+  fi
+
+  auth_hash="$(cat "$auth_hash_file")"
+  cat > "$caddyfile" <<EOF
+:8188 {
+  basic_auth {
+    ${auth_user} ${auth_hash}
+  }
+
+  reverse_proxy comfyui:8188
+}
+EOF
 }
 
 main() {
@@ -161,6 +213,7 @@ main() {
 
   write_env
   create_data_dirs
+  write_caddy_config
 
   if [ "$SKIP_BUILD" -eq 1 ]; then
     echo "Configuration written to ${ENV_FILE}; build skipped."

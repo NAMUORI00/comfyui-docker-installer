@@ -66,13 +66,24 @@ if isinstance(services, dict):
 expected_port = str(os.environ["COMFYUI_HOST_PORT"])
 expected_host = os.environ["COMFYUI_BIND_HOST"]
 bad_publishers = []
+caddy_publishers = []
+direct_comfyui_publishers = []
 
 for service in services:
+    service_name = service.get("Service") or service.get("Name") or ""
     for publisher in service.get("Publishers") or []:
         published_port = str(publisher.get("PublishedPort", ""))
         target_port = str(publisher.get("TargetPort", ""))
+        if published_port in {"", "0"}:
+            continue
         if published_port == expected_port or target_port == "8188":
             host = publisher.get("URL") or ""
+            endpoint = f"{host}:{published_port}->{target_port}"
+            if service_name == "comfyui":
+                direct_comfyui_publishers.append(endpoint)
+                continue
+            if service_name == "caddy":
+                caddy_publishers.append(endpoint)
             if expected_host == "0.0.0.0":
                 host_matches = host in {"", "0.0.0.0", "::"}
             elif expected_host == "127.0.0.1":
@@ -80,7 +91,13 @@ for service in services:
             else:
                 host_matches = host == expected_host
             if not host_matches:
-                bad_publishers.append(f"{host}:{published_port}->{target_port}")
+                bad_publishers.append(endpoint)
+
+if direct_comfyui_publishers:
+    raise SystemExit(
+        "ComfyUI is directly published; only the caddy service may publish port 8188: "
+        + ", ".join(direct_comfyui_publishers)
+    )
 
 if bad_publishers:
     raise SystemExit(

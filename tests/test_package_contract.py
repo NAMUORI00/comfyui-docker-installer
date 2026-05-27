@@ -12,6 +12,15 @@ def read(path: str) -> str:
     return (ROOT / path).read_text(encoding="utf-8")
 
 
+def service_block(compose: str, service: str) -> str:
+    marker = f"  {service}:\n"
+    start = compose.index(marker)
+    next_service = re.search(r"\n  [a-zA-Z0-9_-]+:\n", compose[start + len(marker):])
+    if next_service:
+        return compose[start:start + len(marker) + next_service.start()]
+    return compose[start:]
+
+
 def test_expected_repository_files_exist():
     expected = [
         "Dockerfile",
@@ -36,14 +45,25 @@ def test_expected_repository_files_exist():
     assert missing == []
 
 
-def test_compose_is_lan_accessible_by_default_and_uses_persistent_data():
+def test_compose_routes_lan_access_through_caddy_basic_auth_proxy():
     compose = read("compose.yaml")
-    assert '"${COMFYUI_BIND_HOST:-0.0.0.0}:${COMFYUI_HOST_PORT:-8188}:8188"' in compose
-    assert "${COMFYUI_DATA_DIR}/models:/opt/comfyui-models" in compose
-    assert "./extra_model_paths.yaml:/opt/ComfyUI/extra_model_paths.yaml:ro" in compose
-    assert 'user: "${COMFYUI_USER_SPEC:-1000:1000}"' in compose
-    assert "COMFYUI_REF: ${COMFYUI_REF:-master}" in compose
-    assert "capabilities: [gpu]" in compose
+    comfyui = service_block(compose, "comfyui")
+    caddy = service_block(compose, "caddy")
+    assert "caddy:" in compose
+    assert "image: caddy:2-alpine" in caddy
+    assert '"${COMFYUI_BIND_HOST:-0.0.0.0}:${COMFYUI_HOST_PORT:-8188}:8188"' in caddy
+    assert "${COMFYUI_DATA_DIR}/caddy/Caddyfile:/etc/caddy/Caddyfile:ro" in caddy
+    assert "reverse_proxy comfyui:8188" not in compose
+    assert "ports:" not in comfyui
+    assert "expose:" in comfyui
+    assert '"8188"' in comfyui
+    assert "depends_on:" in caddy
+    assert "comfyui" in caddy
+    assert "${COMFYUI_DATA_DIR}/models:/opt/comfyui-models" in comfyui
+    assert "./extra_model_paths.yaml:/opt/ComfyUI/extra_model_paths.yaml:ro" in comfyui
+    assert 'user: "${COMFYUI_USER_SPEC:-1000:1000}"' in comfyui
+    assert "COMFYUI_REF: ${COMFYUI_REF:-master}" in comfyui
+    assert "capabilities: [gpu]" in comfyui
 
 
 def test_dockerfile_preserves_cuda_pytorch_and_uses_configurable_base():
@@ -70,13 +90,16 @@ def test_env_defaults_match_a6000_2_preflight():
     assert "COMFYUI_REF=master" in env
     assert "COMFYUI_DATA_DIR=./data" in env
     assert "COMFYUI_BIND_HOST=0.0.0.0" in env
+    assert "CADDY_AUTH_USER=yskim" in env
+    assert "CADDY_AUTH_PASSWORD" not in env
+    assert "auth.hash" not in env
     assert "COMFYUI_UID=" in env
     assert "COMFYUI_GID=" in env
     assert "COMFYUI_USER_SPEC=" in env
     assert "COMFYUI_HOST_PORT=8188" in env
 
 
-def test_install_script_detects_environment_and_writes_lan_bind_default():
+def test_install_script_detects_environment_and_generates_caddy_auth_files():
     install = read("scripts/install.sh")
     assert "detect_base_image" in install
     assert "nvidia-smi" in install
@@ -85,7 +108,16 @@ def test_install_script_detects_environment_and_writes_lan_bind_default():
     assert "COMFYUI_BIND_HOST" in install
     assert "COMFYUI_REF=${COMFYUI_REF:-master}" in install
     assert "COMFYUI_BIND_HOST=${bind_host}" in install
+    assert "CADDY_AUTH_USER=${auth_user}" in install
     assert "bind_host=\"${COMFYUI_BIND_HOST:-0.0.0.0}\"" in install
+    assert "auth_user=\"${CADDY_AUTH_USER:-yskim}\"" in install
+    assert "auth_hash_file=\"${COMFYUI_DATA_DIR}/caddy/auth.hash\"" in install
+    assert "caddy hash-password" in install
+    assert "printf '%s\\n' \"$password\"" in install
+    assert "CADDY_AUTH_PASSWORD" in install
+    assert "CADDY_AUTH_RESET" in install
+    assert "reverse_proxy comfyui:8188" in install
+    assert "basic_auth" in install
     assert "nvidia-ctk runtime configure --runtime=docker" in install
     assert "--apply-runtime-fix" in install
     assert "sudo -v" in install
@@ -105,6 +137,11 @@ def test_windows_scripts_generate_relative_data_path_and_no_uid_gid_by_default()
     assert "$DataDir = './data'" in install
     assert "COMFYUI_DATA_DIR=./data" in install
     assert "COMFYUI_BIND_HOST=$bindHost" in install
+    assert "CADDY_AUTH_USER=$authUser" in install
+    assert "auth.hash" in install
+    assert "Caddyfile" in install
+    assert "caddy hash-password" in install
+    assert "CADDY_AUTH_PASSWORD" in install
     assert "'0.0.0.0'" in install
     assert "COMFYUI_REF=" in install
     assert "COMFYUI_UID=" in install
@@ -126,6 +163,9 @@ def test_verify_script_checks_gpu_compose_packages_and_ownership():
     assert "PUBLISHED_JSON" in verify
     assert "COMFYUI_BIND_HOST" in verify
     assert "published endpoint does not match" in verify
+    assert 'published_port in {"", "0"}' in verify
+    assert '"caddy"' in verify
+    assert "ComfyUI is directly published" in verify
 
 
 def test_docs_describe_failure_rollback_and_github_packaging():
@@ -137,7 +177,8 @@ def test_docs_describe_failure_rollback_and_github_packaging():
         "Failure criteria",
         "Rollback",
         "GitHub",
-        "ssh -N -L 8188:127.0.0.1:8188",
+        "Basic Auth",
+        "http://172.18.102.9:8188",
         "Docker daemon NVIDIA runtime",
         "CUDA 13",
     ]:

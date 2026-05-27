@@ -1,4 +1,15 @@
 services:
+  caddy:
+    image: caddy:2-alpine
+    container_name: ${CADDY_CONTAINER_NAME:-comfyui-caddy}
+    restart: unless-stopped
+    depends_on:
+      - comfyui
+    ports:
+      - "${COMFYUI_BIND_HOST:-0.0.0.0}:${COMFYUI_HOST_PORT:-8188}:8188"
+    volumes:
+      - ${COMFYUI_DATA_DIR}/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+
   comfyui:
     build:
       context: .
@@ -12,8 +23,8 @@ services:
     container_name: ${COMFYUI_CONTAINER_NAME:-comfyui-a6000}
     restart: unless-stopped
     user: "${COMFYUI_USER_SPEC:-1000:1000}"
-    ports:
-      - "${COMFYUI_BIND_HOST:-0.0.0.0}:${COMFYUI_HOST_PORT:-8188}:8188"
+    expose:
+      - "8188"
     environment:
       NVIDIA_VISIBLE_DEVICES: ${NVIDIA_VISIBLE_DEVICES:-all}
       NVIDIA_DRIVER_CAPABILITIES: compute,utility

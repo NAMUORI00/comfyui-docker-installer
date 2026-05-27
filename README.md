@@ -8,8 +8,8 @@ This repo was first profiled against `A6000_2`, an Ubuntu 22.04 host with 3 x NV
 
 - Detects the host GPU/driver environment before choosing the default PyTorch CUDA image.
 - Builds ComfyUI from `COMFYUI_REF`, defaulting to latest `master` while allowing a tag or commit SHA for reproducible rebuilds.
-- Generates a local `.env` with UID/GID, data path, port, and image settings.
-- Exposes ComfyUI on `0.0.0.0:8188` by default so hosts on the internal network can connect.
+- Generates a local `.env` with UID/GID, data path, port, image, and Caddy auth user settings.
+- Exposes Caddy on `0.0.0.0:8188` by default; ComfyUI stays on the Docker internal network behind Basic Auth.
 - Stores models, inputs, outputs, custom nodes, and user settings outside the container.
 - Uses `extra_model_paths.yaml` so persistent models do not hide ComfyUI's built-in model directory.
 - Verifies CUDA, Docker Compose config, Python package consistency, and output ownership.
@@ -23,6 +23,12 @@ cd /home/yskim/project/comfyui-docker-installer
 scripts/preflight.sh
 scripts/install.sh --apply-runtime-fix
 scripts/install.sh --start
+```
+
+If `data/caddy/auth.hash` does not exist, the installer prompts for the Basic Auth password. For non-interactive setup, pass it only as a transient environment variable:
+
+```bash
+CADDY_AUTH_PASSWORD='change-me' scripts/install.sh --start
 ```
 
 Windows PowerShell with Docker Desktop:
@@ -43,6 +49,8 @@ Open:
 http://172.18.102.9:8188
 ```
 
+The browser prompts for Basic Auth credentials before ComfyUI loads. The default username is `yskim`; set `CADDY_AUTH_USER` to override it. Password hashes are stored in `data/caddy/auth.hash`; plaintext passwords are not written to `.env` or the repo.
+
 ## Manual Workflow
 
 ```bash
@@ -53,7 +61,7 @@ scripts/verify.sh
 docker compose up -d
 ```
 
-For localhost-only access instead, set `COMFYUI_BIND_HOST=127.0.0.1` and connect through:
+For localhost-only Caddy access instead, set `COMFYUI_BIND_HOST=127.0.0.1` and connect through:
 
 ```bash
 ssh -N -L 8188:127.0.0.1:8188 A6000_2
@@ -67,6 +75,8 @@ Stop and inspect before continuing if:
 - `torch.cuda.is_available()` is not `True` inside the container.
 - Docker daemon restart is not approved or fails.
 - Port `8188` is already used by another service.
+- Basic Auth returns anything other than `401 Unauthorized` without credentials.
+- Basic Auth returns anything other than `200 OK` with valid credentials.
 - Internal network firewall policy does not allow direct access to `8188`.
 - The selected PyTorch/CUDA image is incompatible with the host driver.
 
@@ -102,8 +112,11 @@ The package defaults to relative host mounts:
 COMFYUI_DATA_DIR=./data
 COMFYUI_BIND_HOST=0.0.0.0
 COMFYUI_REF=master
+CADDY_AUTH_USER=yskim
 ```
 
 On Linux, `scripts/install.sh` fills `COMFYUI_UID`, `COMFYUI_GID`, and `COMFYUI_USER_SPEC` from `id -u` and `id -g`, creates the data directories before Docker can create them as root, and fails early if those directories are not writable. On Windows, `scripts/install.ps1` leaves UID/GID empty and lets Compose use its safe default user spec.
 
 For reproducible rebuilds, set `COMFYUI_REF` to a ComfyUI tag or commit SHA before running the installer. The default `master` tracks the latest upstream source.
+
+HTTP Basic Auth is an internal-network access control layer, not transport encryption. If credential confidentiality on the wire matters, add HTTPS, VPN, or SSO in front of Caddy.
