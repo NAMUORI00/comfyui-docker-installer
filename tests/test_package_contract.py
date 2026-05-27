@@ -1,0 +1,130 @@
+import os
+import re
+import stat
+import subprocess
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parents[1]
+
+
+def read(path: str) -> str:
+    return (ROOT / path).read_text(encoding="utf-8")
+
+
+def test_expected_repository_files_exist():
+    expected = [
+        "Dockerfile",
+        "compose.yaml",
+        ".env.example",
+        "extra_model_paths.yaml",
+        "scripts/preflight.sh",
+        "scripts/install.sh",
+        "scripts/verify.sh",
+        "scripts/uninstall.sh",
+        "scripts/tunnel.ps1",
+        "README.md",
+        "docs/a6000-2-preflight.md",
+        "docs/compatibility.md",
+        "docs/operations.md",
+        ".gitignore",
+    ]
+    missing = [path for path in expected if not (ROOT / path).exists()]
+    assert missing == []
+
+
+def test_compose_is_localhost_only_and_uses_persistent_data():
+    compose = read("compose.yaml")
+    assert '"127.0.0.1:${COMFYUI_HOST_PORT:-8188}:8188"' in compose
+    assert "0.0.0.0:${COMFYUI_HOST_PORT" not in compose
+    assert "${COMFYUI_DATA_DIR}/models:/opt/comfyui-models" in compose
+    assert "./extra_model_paths.yaml:/opt/ComfyUI/extra_model_paths.yaml:ro" in compose
+    assert 'user: "${COMFYUI_UID}:${COMFYUI_GID}"' in compose
+    assert "capabilities: [gpu]" in compose
+
+
+def test_dockerfile_preserves_cuda_pytorch_and_uses_configurable_base():
+    dockerfile = read("Dockerfile")
+    assert "ARG COMFYUI_BASE_IMAGE=pytorch/pytorch:2.4.1-cuda12.1-cudnn9-runtime" in dockerfile
+    assert "FROM ${COMFYUI_BASE_IMAGE}" in dockerfile
+    assert "torch-constraints.txt" in dockerfile
+    assert "torch.version.cuda" in dockerfile
+    assert "pip check" in dockerfile
+    assert "USER ${COMFYUI_UID}:${COMFYUI_GID}" in dockerfile
+
+
+def test_env_defaults_match_a6000_2_preflight():
+    env = read(".env.example")
+    assert "COMFYUI_BASE_IMAGE=pytorch/pytorch:2.4.1-cuda12.1-cudnn9-runtime" in env
+    assert "COMFYUI_DATA_DIR=/home/yskim/project/comfyui-docker-installer/data" in env
+    assert "COMFYUI_UID=1005" in env
+    assert "COMFYUI_GID=1006" in env
+    assert "COMFYUI_HOST_PORT=8188" in env
+
+
+def test_install_script_detects_environment_and_refuses_unsafe_public_bind():
+    install = read("scripts/install.sh")
+    assert "detect_base_image" in install
+    assert "nvidia-smi" in install
+    assert "535." in install
+    assert "pytorch/pytorch:2.4.1-cuda12.1-cudnn9-runtime" in install
+    assert "COMFYUI_BIND_HOST" in install
+    assert "127.0.0.1" in install
+    assert "Refusing public bind" in install
+    assert "nvidia-ctk runtime configure --runtime=docker" in install
+    assert "--apply-runtime-fix" in install
+    assert "sudo -v" in install
+    assert "sudo authentication" in install
+
+
+def test_verify_script_checks_gpu_compose_packages_and_ownership():
+    verify = read("scripts/verify.sh")
+    assert "torch.cuda.is_available()" in verify
+    assert "docker compose config --quiet" in verify
+    assert "pip check" in verify
+    assert ".ownership-check" in verify
+    assert "ss -ltnp" in verify
+    assert "0.0.0.0" in verify
+
+
+def test_docs_describe_failure_rollback_and_github_packaging():
+    readme = read("README.md")
+    operations = read("docs/operations.md")
+    compatibility = read("docs/compatibility.md")
+    combined = "\n".join([readme, operations, compatibility])
+    for phrase in [
+        "Failure criteria",
+        "Rollback",
+        "GitHub",
+        "ssh -N -L 8188:127.0.0.1:8188",
+        "Docker daemon NVIDIA runtime",
+        "CUDA 13",
+    ]:
+        assert phrase in combined
+
+
+def test_shell_scripts_have_valid_syntax_and_executable_bits():
+    for rel in [
+        "scripts/preflight.sh",
+        "scripts/install.sh",
+        "scripts/verify.sh",
+        "scripts/uninstall.sh",
+    ]:
+        path = ROOT / rel
+        first_line = path.read_text(encoding="utf-8").splitlines()[0]
+        assert first_line == "#!/usr/bin/env bash"
+        if os.name != "nt":
+            mode = path.stat().st_mode
+            assert mode & stat.S_IXUSR, f"{rel} is not executable"
+        result = subprocess.run(["bash", "-n", Path(rel).as_posix()], cwd=ROOT, text=True, capture_output=True)
+        assert result.returncode == 0, result.stderr
+
+
+def test_no_placeholders_or_incompatible_cuda13_defaults():
+    forbidden = re.compile(r"(TBD|TODO|fill in|implement later|2\.9\.0-cuda13|cuda13\.0)", re.IGNORECASE)
+    scanned = []
+    for path in ROOT.rglob("*"):
+        if path.is_file() and ".git" not in path.parts and path.suffix in {"", ".md", ".sh", ".yaml", ".example", ".ps1"}:
+            scanned.append(path)
+            assert not forbidden.search(path.read_text(encoding="utf-8")), str(path)
+    assert scanned

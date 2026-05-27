@@ -1,0 +1,32 @@
+services:
+  comfyui:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        COMFYUI_BASE_IMAGE: ${COMFYUI_BASE_IMAGE:-pytorch/pytorch:2.4.1-cuda12.1-cudnn9-runtime}
+        COMFYUI_UID: ${COMFYUI_UID:-1005}
+        COMFYUI_GID: ${COMFYUI_GID:-1006}
+    image: ${COMFYUI_IMAGE:-comfyui-a6000:local}
+    container_name: ${COMFYUI_CONTAINER_NAME:-comfyui-a6000}
+    restart: unless-stopped
+    user: "${COMFYUI_UID}:${COMFYUI_GID}"
+    ports:
+      - "127.0.0.1:${COMFYUI_HOST_PORT:-8188}:8188"
+    environment:
+      NVIDIA_VISIBLE_DEVICES: ${NVIDIA_VISIBLE_DEVICES:-all}
+      NVIDIA_DRIVER_CAPABILITIES: compute,utility
+    volumes:
+      - ${COMFYUI_DATA_DIR}/models:/opt/comfyui-models
+      - ./extra_model_paths.yaml:/opt/ComfyUI/extra_model_paths.yaml:ro
+      - ${COMFYUI_DATA_DIR}/input:/opt/ComfyUI/input
+      - ${COMFYUI_DATA_DIR}/output:/opt/ComfyUI/output
+      - ${COMFYUI_DATA_DIR}/custom_nodes:/opt/ComfyUI/custom_nodes
+      - ${COMFYUI_DATA_DIR}/user:/opt/ComfyUI/user
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
