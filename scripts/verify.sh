@@ -40,6 +40,22 @@ docker compose --env-file "$ENV_FILE" run --rm comfyui pip check
 echo "== ownership check =="
 docker compose --env-file "$ENV_FILE" run --rm comfyui sh -lc 'touch /opt/ComfyUI/output/.ownership-check && stat -c "%u:%g %n" /opt/ComfyUI/output/.ownership-check && rm /opt/ComfyUI/output/.ownership-check'
 
+echo "== python user base check =="
+docker compose --env-file "$ENV_FILE" run --rm comfyui python - <<'PY'
+import os
+import site
+
+expected = "/opt/comfyui-python"
+print("PYTHONUSERBASE", os.environ.get("PYTHONUSERBASE"))
+print("USER_SITE", site.USER_SITE)
+if os.environ.get("PYTHONUSERBASE") != expected:
+    raise SystemExit(f"PYTHONUSERBASE must be {expected}")
+if not site.USER_SITE.startswith(expected + "/"):
+    raise SystemExit(f"Python user site is not under {expected}: {site.USER_SITE}")
+if not os.access(expected, os.W_OK):
+    raise SystemExit(f"Python user base is not writable: {expected}")
+PY
+
 echo "== port exposure check =="
 published_json="$(docker compose --env-file "$ENV_FILE" ps --format json 2>/dev/null || true)"
 if [ -n "$published_json" ]; then

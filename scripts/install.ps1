@@ -96,8 +96,41 @@ COMFYUI_USER_SPEC=
 NVIDIA_VISIBLE_DEVICES=$(if ($env:NVIDIA_VISIBLE_DEVICES) { $env:NVIDIA_VISIBLE_DEVICES } else { 'all' })
 "@ | Set-Content -Path $EnvFile -Encoding utf8NoBOM
 
-foreach ($dir in @('models', 'input', 'output', 'custom_nodes', 'user', 'caddy')) {
+$modelDirs = @(
+    'audio_encoders',
+    'background_removal',
+    'checkpoints',
+    'classifiers',
+    'clip',
+    'clip_vision',
+    'configs',
+    'controlnet',
+    'detection',
+    'diffusers',
+    'diffusion_models',
+    'embeddings',
+    'frame_interpolation',
+    'geometry_estimation',
+    'gligen',
+    'hypernetworks',
+    'latent_upscale_models',
+    'loras',
+    'model_patches',
+    'optical_flow',
+    'photomaker',
+    'style_models',
+    'text_encoders',
+    'upscale_models',
+    'vae',
+    'vae_approx'
+)
+
+foreach ($dir in @('models', 'input', 'output', 'custom_nodes', 'user', 'caddy', 'python')) {
     New-Item -ItemType Directory -Force -Path (Join-Path $ProjectDir (Join-Path $dataPath $dir)) | Out-Null
+}
+
+foreach ($dir in $modelDirs) {
+    New-Item -ItemType Directory -Force -Path (Join-Path $ProjectDir (Join-Path $dataPath (Join-Path 'models' $dir))) | Out-Null
 }
 
 Write-CaddyConfig

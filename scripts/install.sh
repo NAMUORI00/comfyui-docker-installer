@@ -129,15 +129,51 @@ create_data_dirs() {
   # shellcheck disable=SC1090
   . "$ENV_FILE"
   local uid gid dir
+  local model_dirs=(
+    audio_encoders
+    background_removal
+    checkpoints
+    classifiers
+    clip
+    clip_vision
+    configs
+    controlnet
+    detection
+    diffusers
+    diffusion_models
+    embeddings
+    frame_interpolation
+    geometry_estimation
+    gligen
+    hypernetworks
+    latent_upscale_models
+    loras
+    model_patches
+    optical_flow
+    photomaker
+    style_models
+    text_encoders
+    upscale_models
+    vae
+    vae_approx
+  )
   uid="${COMFYUI_UID:-$(id -u)}"
   gid="${COMFYUI_GID:-$(id -g)}"
   mkdir -p \
     "${COMFYUI_DATA_DIR}/models" \
+    "${COMFYUI_DATA_DIR}/models/checkpoints" \
+    "${COMFYUI_DATA_DIR}/models/text_encoders" \
+    "${COMFYUI_DATA_DIR}/models/vae_approx" \
     "${COMFYUI_DATA_DIR}/input" \
     "${COMFYUI_DATA_DIR}/output" \
     "${COMFYUI_DATA_DIR}/custom_nodes" \
     "${COMFYUI_DATA_DIR}/user" \
-    "${COMFYUI_DATA_DIR}/caddy"
+    "${COMFYUI_DATA_DIR}/caddy" \
+    "${COMFYUI_DATA_DIR}/python"
+
+  for dir in "${model_dirs[@]}"; do
+    mkdir -p "${COMFYUI_DATA_DIR}/models/${dir}"
+  done
 
   if [ "$(id -u)" -eq 0 ]; then
     chown -R "${uid}:${gid}" "${COMFYUI_DATA_DIR}"
@@ -149,7 +185,8 @@ create_data_dirs() {
     "${COMFYUI_DATA_DIR}/output" \
     "${COMFYUI_DATA_DIR}/custom_nodes" \
     "${COMFYUI_DATA_DIR}/user" \
-    "${COMFYUI_DATA_DIR}/caddy"; do
+    "${COMFYUI_DATA_DIR}/caddy" \
+    "${COMFYUI_DATA_DIR}/python"; do
     if [ ! -w "$dir" ]; then
       echo "Data directory is not writable by the current user: $dir" >&2
       echo "Fix ownership or rerun from an account that can write COMFYUI_DATA_DIR." >&2

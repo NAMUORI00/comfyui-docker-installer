@@ -11,6 +11,7 @@ This repo was first profiled against `A6000_2`, an Ubuntu 22.04 host with 3 x NV
 - Generates a local `.env` with UID/GID, data path, port, image, and Caddy auth user settings.
 - Exposes Caddy on `0.0.0.0:8188` by default; ComfyUI stays on the Docker internal network behind Basic Auth.
 - Stores models, inputs, outputs, custom nodes, and user settings outside the container.
+- Stores custom node Python packages in a persistent `data/python` user base.
 - Uses `extra_model_paths.yaml` so persistent models do not hide ComfyUI's built-in model directory.
 - Verifies CUDA, Docker Compose config, Python package consistency, and output ownership.
 
@@ -120,3 +121,39 @@ On Linux, `scripts/install.sh` fills `COMFYUI_UID`, `COMFYUI_GID`, and `COMFYUI_
 For reproducible rebuilds, set `COMFYUI_REF` to a ComfyUI tag or commit SHA before running the installer. The default `master` tracks the latest upstream source.
 
 HTTP Basic Auth is an internal-network access control layer, not transport encryption. If credential confidentiality on the wire matters, add HTTPS, VPN, or SSO in front of Caddy.
+
+## Models And Custom Nodes
+
+Persistent model files live under `data/models`. The package creates ComfyUI model-type folders such as `checkpoints`, `loras`, `vae`, `text_encoders`, `diffusers`, `controlnet`, `upscale_models`, `vae_approx`, and the other model categories listed in `extra_model_paths.yaml`.
+
+Custom node source code lives under:
+
+```text
+data/custom_nodes
+```
+
+After cloning or copying custom nodes, install their Python requirements into the persistent user base:
+
+```bash
+scripts/install-custom-node-deps.sh
+```
+
+On Windows:
+
+```powershell
+.\scripts\install-custom-node-deps.ps1
+```
+
+The scripts scan `data/custom_nodes/*/requirements.txt` and run `python -m pip install --user -r ...` inside the ComfyUI container. Packages are installed under `data/python`, mounted as `PYTHONUSERBASE=/opt/comfyui-python`, so custom node dependencies survive container recreation without writing into the image's global site-packages.
+
+Only run these scripts for trusted custom nodes. Python package installation can execute code from the node or dependency packages. If custom node dependencies conflict, or after a Python/base-image upgrade, reset the persistent Python user base and reinstall:
+
+```bash
+scripts/install-custom-node-deps.sh --reset-python
+```
+
+Windows:
+
+```powershell
+.\scripts\install-custom-node-deps.ps1 -ResetPython
+```

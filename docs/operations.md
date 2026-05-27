@@ -47,10 +47,39 @@ Subdirectories:
 - `output`
 - `custom_nodes`
 - `user`
+- `python`
 
 `extra_model_paths.yaml` maps persistent models to `/opt/comfyui-models` inside the container. This avoids hiding ComfyUI's built-in `/opt/ComfyUI/models` tree.
 
 On Linux, run `scripts/install.sh` so `.env` gets the invoking user's UID/GID and `COMFYUI_USER_SPEC`. The installer creates data directories before Compose starts and fails early if they are not writable. On Windows, run `scripts/install.ps1`; UID/GID fields remain empty and the Compose default is used.
+
+## Custom Node Dependencies
+
+Custom node source code is mounted at `/opt/ComfyUI/custom_nodes` from `data/custom_nodes`. Python packages for custom nodes are installed into the persistent user base mounted from `data/python`:
+
+```text
+PYTHONUSERBASE=/opt/comfyui-python
+```
+
+Install requirements after adding custom nodes:
+
+```bash
+scripts/install-custom-node-deps.sh
+```
+
+Windows:
+
+```powershell
+.\scripts\install-custom-node-deps.ps1
+```
+
+These scripts scan `custom_nodes/*/requirements.txt` and run `python -m pip install --user -r` inside the ComfyUI container.
+
+Only run them for trusted custom nodes. If packages conflict or the base image/Python version changes, reset the persistent Python user base and reinstall:
+
+```bash
+scripts/install-custom-node-deps.sh --reset-python
+```
 
 ## Source Version
 
@@ -77,6 +106,7 @@ It checks:
 - `torch.cuda.is_available()` inside the container.
 - Python package consistency through `pip check`.
 - Output file ownership.
+- Persistent Python user base points at `/opt/comfyui-python`.
 - Published endpoint for port `8188` matches `COMFYUI_BIND_HOST`.
 - ComfyUI is not directly published; only the `caddy` service may publish port `8188`.
 

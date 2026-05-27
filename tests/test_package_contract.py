@@ -31,9 +31,11 @@ def test_expected_repository_files_exist():
         "scripts/install.sh",
         "scripts/verify.sh",
         "scripts/uninstall.sh",
+        "scripts/install-custom-node-deps.sh",
         "scripts/install.ps1",
         "scripts/verify.ps1",
         "scripts/uninstall.ps1",
+        "scripts/install-custom-node-deps.ps1",
         "scripts/tunnel.ps1",
         "README.md",
         "docs/a6000-2-preflight.md",
@@ -60,7 +62,10 @@ def test_compose_routes_lan_access_through_caddy_basic_auth_proxy():
     assert "depends_on:" in caddy
     assert "comfyui" in caddy
     assert "${COMFYUI_DATA_DIR}/models:/opt/comfyui-models" in comfyui
+    assert "${COMFYUI_DATA_DIR}/python:/opt/comfyui-python" in comfyui
     assert "./extra_model_paths.yaml:/opt/ComfyUI/extra_model_paths.yaml:ro" in comfyui
+    assert "PYTHONUSERBASE: /opt/comfyui-python" in comfyui
+    assert "/opt/comfyui-python/bin" in comfyui
     assert 'user: "${COMFYUI_USER_SPEC:-1000:1000}"' in comfyui
     assert "COMFYUI_REF: ${COMFYUI_REF:-master}" in comfyui
     assert "capabilities: [gpu]" in comfyui
@@ -99,6 +104,40 @@ def test_env_defaults_match_a6000_2_preflight():
     assert "COMFYUI_HOST_PORT=8188" in env
 
 
+def test_extra_model_paths_cover_current_comfyui_model_types():
+    model_paths = read("extra_model_paths.yaml")
+    expected_model_types = [
+        "audio_encoders",
+        "background_removal",
+        "checkpoints",
+        "classifiers",
+        "clip",
+        "clip_vision",
+        "configs",
+        "controlnet",
+        "detection",
+        "diffusers",
+        "diffusion_models",
+        "embeddings",
+        "frame_interpolation",
+        "geometry_estimation",
+        "gligen",
+        "hypernetworks",
+        "latent_upscale_models",
+        "loras",
+        "model_patches",
+        "optical_flow",
+        "photomaker",
+        "style_models",
+        "text_encoders",
+        "upscale_models",
+        "vae",
+        "vae_approx",
+    ]
+    for model_type in expected_model_types:
+        assert f"  {model_type}: {model_type}" in model_paths
+
+
 def test_install_script_detects_environment_and_generates_caddy_auth_files():
     install = read("scripts/install.sh")
     assert "detect_base_image" in install
@@ -128,6 +167,10 @@ def test_install_script_detects_environment_and_generates_caddy_auth_files():
     assert "id -g" in install
     assert "Data directory is not writable" in install
     assert "chown -R" in install
+    assert "${COMFYUI_DATA_DIR}/python" in install
+    assert "${COMFYUI_DATA_DIR}/models/checkpoints" in install
+    assert "${COMFYUI_DATA_DIR}/models/text_encoders" in install
+    assert "${COMFYUI_DATA_DIR}/models/vae_approx" in install
 
 
 def test_windows_scripts_generate_relative_data_path_and_no_uid_gid_by_default():
@@ -140,6 +183,10 @@ def test_windows_scripts_generate_relative_data_path_and_no_uid_gid_by_default()
     assert "CADDY_AUTH_USER=$authUser" in install
     assert "auth.hash" in install
     assert "Caddyfile" in install
+    assert "'python'" in install
+    assert "'checkpoints'" in install
+    assert "'text_encoders'" in install
+    assert "'vae_approx'" in install
     assert "caddy hash-password" in install
     assert "CADDY_AUTH_PASSWORD" in install
     assert "'0.0.0.0'" in install
@@ -166,6 +213,22 @@ def test_verify_script_checks_gpu_compose_packages_and_ownership():
     assert 'published_port in {"", "0"}' in verify
     assert '"caddy"' in verify
     assert "ComfyUI is directly published" in verify
+    assert "PYTHONUSERBASE" in verify
+    assert "/opt/comfyui-python" in verify
+
+
+def test_custom_node_dependency_scripts_install_requirements_into_user_base():
+    linux_script = read("scripts/install-custom-node-deps.sh")
+    windows_script = read("scripts/install-custom-node-deps.ps1")
+    for script in [linux_script, windows_script]:
+        assert "docker compose" in script
+        assert "custom_nodes" in script
+        assert "requirements.txt" in script
+        assert "python -m pip install --user -r" in script
+        assert "PYTHONUSERBASE" in script
+        assert "/opt/comfyui-python" in script
+        assert "reset-python" in script or "ResetPython" in script
+        assert "trusted custom nodes" in script
 
 
 def test_docs_describe_failure_rollback_and_github_packaging():
@@ -178,6 +241,10 @@ def test_docs_describe_failure_rollback_and_github_packaging():
         "Rollback",
         "GitHub",
         "Basic Auth",
+        "install-custom-node-deps",
+        "reset-python",
+        "trusted custom nodes",
+        "data/python",
         "http://172.18.102.9:8188",
         "Docker daemon NVIDIA runtime",
         "CUDA 13",
@@ -191,6 +258,7 @@ def test_shell_scripts_have_valid_syntax_and_executable_bits():
         "scripts/install.sh",
         "scripts/verify.sh",
         "scripts/uninstall.sh",
+        "scripts/install-custom-node-deps.sh",
     ]:
         path = ROOT / rel
         first_line = path.read_text(encoding="utf-8").splitlines()[0]

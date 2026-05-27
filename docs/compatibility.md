@@ -46,7 +46,7 @@ sudo systemctl restart docker
 - Linux: `scripts/install.sh`, `scripts/preflight.sh`, `scripts/verify.sh`, `scripts/uninstall.sh`
 - Windows PowerShell: `scripts/install.ps1`, `scripts/verify.ps1`, `scripts/uninstall.ps1`, `scripts/tunnel.ps1`
 
-Host data mounts default to `./data` on both platforms. Network binding defaults to `COMFYUI_BIND_HOST=0.0.0.0` so internal network clients can connect to Caddy. Caddy applies Basic Auth and proxies to ComfyUI on the Docker internal network; set `COMFYUI_BIND_HOST=127.0.0.1` for SSH-tunnel-only operation. Linux installation dynamically writes UID/GID values into `.env`; Windows installation leaves UID/GID blank and relies on Compose defaults.
+Host data mounts default to `./data` on both platforms. Network binding defaults to `COMFYUI_BIND_HOST=0.0.0.0` so internal network clients can connect to Caddy. Caddy applies Basic Auth and proxies to ComfyUI on the Docker internal network; set `COMFYUI_BIND_HOST=127.0.0.1` for SSH-tunnel-only operation. Linux installation dynamically writes UID/GID values into `.env`; Windows installation leaves UID/GID blank and relies on Compose defaults. Custom node Python packages install into `data/python`, exposed as `PYTHONUSERBASE=/opt/comfyui-python`.
 
 `COMFYUI_REF` defaults to `master` so normal installs track latest upstream ComfyUI. Set it to a tag or commit SHA when reproducible rebuilds are more important than latest-source tracking.
 

@@ -28,6 +28,8 @@ services:
     environment:
       NVIDIA_VISIBLE_DEVICES: ${NVIDIA_VISIBLE_DEVICES:-all}
       NVIDIA_DRIVER_CAPABILITIES: compute,utility
+      PYTHONUSERBASE: /opt/comfyui-python
+      PATH: /opt/comfyui-python/bin:/usr/local/nvidia/bin:/usr/local/cuda/bin:/opt/conda/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
     volumes:
       - ${COMFYUI_DATA_DIR}/models:/opt/comfyui-models
       - ./extra_model_paths.yaml:/opt/ComfyUI/extra_model_paths.yaml:ro
@@ -35,6 +37,7 @@ services:
       - ${COMFYUI_DATA_DIR}/output:/opt/ComfyUI/output
       - ${COMFYUI_DATA_DIR}/custom_nodes:/opt/ComfyUI/custom_nodes
       - ${COMFYUI_DATA_DIR}/user:/opt/ComfyUI/user
+      - ${COMFYUI_DATA_DIR}/python:/opt/comfyui-python
     deploy:
       resources:
         reservations:
