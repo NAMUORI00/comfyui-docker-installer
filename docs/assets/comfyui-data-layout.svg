@@ -1,92 +1,59 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" role="img" aria-labelledby="title desc">
-  <title id="title">ComfyUI Docker Installer persistent data layout</title>
-  <desc id="desc">The data directory stores models, custom nodes, Python user packages, input, output, user settings, and Caddy auth configuration outside the container.</desc>
-  <defs>
-    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
-      <path d="M 0 0 L 10 5 L 0 10 z" fill="#455a64"/>
-    </marker>
-    <style>
-      text { font-family: Arial, Helvetica, sans-serif; fill: #1f2933; }
-      .title { font-size: 32px; font-weight: 700; }
-      .subtitle { font-size: 15px; fill: #52616b; }
-      .section { font-size: 23px; font-weight: 700; }
-      .label { font-size: 18px; font-weight: 700; }
-      .body { font-size: 15px; }
-      .small { font-size: 13px; fill: #52616b; }
-      .host { fill: #fffaf0; stroke: #c99a4a; stroke-width: 2; }
-      .container { fill: #f5fbff; stroke: #6fa8dc; stroke-width: 2; }
-      .card { fill: #ffffff; stroke: #c99a4a; stroke-width: 1.6; }
-      .mount { stroke: #455a64; stroke-width: 2.2; stroke-dasharray: 9 7; marker-end: url(#arrow); fill: none; }
-      .note { fill: #f1f8e9; stroke: #74a66a; stroke-width: 1.5; }
-    </style>
-  </defs>
-  <rect width="1600" height="900" fill="#ffffff"/>
-  <text x="60" y="58" class="title">ComfyUI 데이터는 컨테이너가 아니라 ./data에 남습니다</text>
-  <text x="60" y="88" class="subtitle">ComfyUI runtime data is stored on the host under ./data, so rebuilds and container recreation do not erase user files.</text>
-  <rect x="80" y="145" width="1440" height="250" rx="16" class="container"/>
-  <text x="800" y="188" text-anchor="middle" class="section">Docker Compose 마운트 대상 / Container mount targets</text>
-  <rect x="150" y="230" width="185" height="92" rx="12" fill="#ffffff" stroke="#6fa8dc"/>
-  <text x="242" y="267" text-anchor="middle" class="label">/opt/comfyui-models</text>
-  <text x="242" y="295" text-anchor="middle" class="small">extra_model_paths.yaml</text>
-  <rect x="365" y="230" width="210" height="92" rx="12" fill="#ffffff" stroke="#6fa8dc"/>
-  <text x="470" y="267" text-anchor="middle" class="label">/opt/ComfyUI/custom_nodes</text>
-  <text x="470" y="295" text-anchor="middle" class="small">plugin source</text>
-  <rect x="605" y="230" width="190" height="92" rx="12" fill="#ffffff" stroke="#6fa8dc"/>
-  <text x="700" y="267" text-anchor="middle" class="label">/opt/comfyui-python</text>
-  <text x="700" y="295" text-anchor="middle" class="small">PYTHONUSERBASE</text>
-  <rect x="825" y="230" width="165" height="92" rx="12" fill="#ffffff" stroke="#6fa8dc"/>
-  <text x="908" y="267" text-anchor="middle" class="label">input / output</text>
-  <text x="908" y="295" text-anchor="middle" class="small">workflows, results</text>
-  <rect x="1020" y="230" width="155" height="92" rx="12" fill="#ffffff" stroke="#6fa8dc"/>
-  <text x="1098" y="267" text-anchor="middle" class="label">/opt/ComfyUI/user</text>
-  <text x="1098" y="295" text-anchor="middle" class="small">settings, DB</text>
-  <rect x="1205" y="230" width="245" height="92" rx="12" fill="#ffffff" stroke="#6fa8dc"/>
-  <text x="1328" y="267" text-anchor="middle" class="label">/etc/caddy/Caddyfile</text>
-  <text x="1328" y="295" text-anchor="middle" class="small">Basic Auth proxy config</text>
-  <rect x="80" y="480" width="1440" height="345" rx="16" class="host"/>
-  <text x="800" y="525" text-anchor="middle" class="section">호스트 상대 경로 ./data / Host-relative persistent directory</text>
-  <rect x="130" y="575" width="300" height="195" rx="14" class="card"/>
-  <text x="280" y="612" text-anchor="middle" class="label">models/</text>
-  <text x="280" y="637" text-anchor="middle" class="small">checkpoints, loras, vae, text_encoders...</text>
-  <text x="162" y="672" class="body">checkpoints/</text>
-  <text x="162" y="704" class="body">loras/</text>
-  <text x="162" y="736" class="body">vae/</text>
-  <text x="292" y="672" class="body">controlnet/</text>
-  <text x="292" y="704" class="body">diffusers/</text>
-  <text x="292" y="736" class="body">vae_approx/</text>
-  <rect x="462" y="575" width="175" height="195" rx="14" class="card"/>
-  <text x="550" y="612" text-anchor="middle" class="label">custom_nodes/</text>
-  <text x="550" y="644" text-anchor="middle" class="body">커스텀 노드</text>
-  <text x="550" y="669" text-anchor="middle" class="small">plugin source</text>
-  <text x="550" y="724" text-anchor="middle" class="small">requirements.txt scan</text>
-  <rect x="670" y="575" width="185" height="195" rx="14" class="card"/>
-  <text x="762" y="612" text-anchor="middle" class="label">python/</text>
-  <text x="762" y="644" text-anchor="middle" class="body">패키지 저장소</text>
-  <text x="762" y="670" text-anchor="middle" class="small">pip install --user</text>
-  <text x="762" y="724" text-anchor="middle" class="small">survives rebuilds</text>
-  <rect x="888" y="575" width="150" height="195" rx="14" class="card"/>
-  <text x="963" y="612" text-anchor="middle" class="label">input/</text>
-  <text x="963" y="644" text-anchor="middle" class="body">입력 파일</text>
-  <text x="963" y="670" text-anchor="middle" class="small">workflows, images</text>
-  <rect x="1070" y="575" width="150" height="195" rx="14" class="card"/>
-  <text x="1145" y="612" text-anchor="middle" class="label">output/</text>
-  <text x="1145" y="644" text-anchor="middle" class="body">생성 결과</text>
-  <text x="1145" y="670" text-anchor="middle" class="small">images, videos, logs</text>
-  <rect x="1252" y="575" width="120" height="195" rx="14" class="card"/>
-  <text x="1312" y="612" text-anchor="middle" class="label">user/</text>
-  <text x="1312" y="644" text-anchor="middle" class="body">설정</text>
-  <text x="1312" y="670" text-anchor="middle" class="small">comfyui.db</text>
-  <rect x="1404" y="575" width="90" height="195" rx="14" class="card"/>
-  <text x="1449" y="612" text-anchor="middle" class="label">caddy/</text>
-  <text x="1449" y="644" text-anchor="middle" class="body">Auth</text>
-  <text x="1449" y="670" text-anchor="middle" class="small">auth.hash</text>
-  <path d="M242 322 V575" class="mount"/>
-  <path d="M470 322 V575" class="mount"/>
-  <path d="M700 322 V575" class="mount"/>
-  <path d="M908 322 V575" class="mount"/>
-  <path d="M1098 322 V575" class="mount"/>
-  <path d="M1328 322 V575" class="mount"/>
-  <rect x="260" y="815" width="1080" height="55" rx="12" class="note"/>
-  <text x="800" y="840" text-anchor="middle" class="label">핵심: 설치/재빌드/컨테이너 재생성은 이미지를 바꿔도 ./data의 사용자 파일을 보존합니다.</text>
-  <text x="800" y="862" text-anchor="middle" class="small">Key point: rebuilds change containers and images, not the host-owned persistent data directory.</text>
+<svg width="1280" height="640" viewBox="0 0 1280 640" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="호스트 ./data 하위 폴더가 컨테이너 안의 어떤 경로로 마운트되는지 보여 주는 표">
+<title>ComfyUI 데이터 보존 구조</title>
+<text x="300.0" y="40.0" fill="#2f81f7" font-size="25" font-weight="800" text-anchor="middle" dominant-baseline="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', sans-serif">호스트 ./data</text>
+<text x="940.0" y="40.0" fill="#2f81f7" font-size="25" font-weight="800" text-anchor="middle" dominant-baseline="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', sans-serif">컨테이너 경로</text>
+<rect x="120.0" y="76.0" width="360.0" height="72.0" rx="14" fill="none" stroke="#7d8590" stroke-opacity="0.6" stroke-width="1.6"/>
+<g transform="translate(136.0,100.0) scale(1.000)" stroke="#7d8590" stroke-width="1.90" stroke-linecap="round" stroke-linejoin="round" fill="none"><path d="M2,5 h7 l2,3 h11 v12 h-20 z"/></g>
+<text x="320.0" y="101.0" fill="#7d8590" font-size="19" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', sans-serif">models/</text>
+<text x="320.0" y="126.0" fill="#7d8590" font-size="15" font-weight="500" text-anchor="middle" dominant-baseline="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', sans-serif">checkpoints · loras · vae …</text>
+<rect x="760.0" y="76.0" width="400.0" height="72.0" rx="14" fill="none" stroke="#2f81f7" stroke-opacity="0.9" stroke-width="1.8"/>
+<text x="960.0" y="101.0" fill="#2f81f7" font-size="18" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', sans-serif">/opt/comfyui-models</text>
+<text x="960.0" y="126.0" fill="#7d8590" font-size="15" font-weight="500" text-anchor="middle" dominant-baseline="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', sans-serif">extra_model_paths.yaml로 연결</text>
+<path d="M486.0,112.0 L754.0,112.0" stroke="#7d8590" stroke-opacity="0.9" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M746.1,116.2 L754.0,112.0 L746.1,107.8" stroke="#7d8590" stroke-opacity="0.9" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="120.0" y="168.0" width="360.0" height="72.0" rx="14" fill="none" stroke="#7d8590" stroke-opacity="0.6" stroke-width="1.6"/>
+<g transform="translate(136.0,192.0) scale(1.000)" stroke="#7d8590" stroke-width="1.90" stroke-linecap="round" stroke-linejoin="round" fill="none"><path d="M12,2 l9,5 v10 l-9,5 l-9,-5 v-10 z M3,7 l9,5 l9,-5 M12,12 v10"/></g>
+<text x="320.0" y="193.0" fill="#7d8590" font-size="19" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', sans-serif">custom_nodes/</text>
+<text x="320.0" y="218.0" fill="#7d8590" font-size="15" font-weight="500" text-anchor="middle" dominant-baseline="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', sans-serif">커스텀 노드 소스</text>
+<rect x="760.0" y="168.0" width="400.0" height="72.0" rx="14" fill="none" stroke="#7d8590" stroke-opacity="0.6" stroke-width="1.6"/>
+<text x="960.0" y="193.0" fill="#7d8590" font-size="18" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', sans-serif">/opt/ComfyUI/custom_nodes</text>
+<text x="960.0" y="218.0" fill="#7d8590" font-size="15" font-weight="500" text-anchor="middle" dominant-baseline="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', sans-serif">requirements.txt 자동 설치</text>
+<path d="M486.0,204.0 L754.0,204.0" stroke="#7d8590" stroke-opacity="0.9" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M746.1,208.2 L754.0,204.0 L746.1,199.8" stroke="#7d8590" stroke-opacity="0.9" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="120.0" y="260.0" width="360.0" height="72.0" rx="14" fill="none" stroke="#7d8590" stroke-opacity="0.6" stroke-width="1.6"/>
+<g transform="translate(136.0,284.0) scale(1.000)" stroke="#7d8590" stroke-width="1.90" stroke-linecap="round" stroke-linejoin="round" fill="none"><path d="M3,4 h18 v16 h-18 z M7,9 l3,3 l-3,3 M12,15 h5"/></g>
+<text x="320.0" y="285.0" fill="#7d8590" font-size="19" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', sans-serif">python/</text>
+<text x="320.0" y="310.0" fill="#7d8590" font-size="15" font-weight="500" text-anchor="middle" dominant-baseline="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', sans-serif">노드용 pip 패키지</text>
+<rect x="760.0" y="260.0" width="400.0" height="72.0" rx="14" fill="none" stroke="#7d8590" stroke-opacity="0.6" stroke-width="1.6"/>
+<text x="960.0" y="285.0" fill="#7d8590" font-size="18" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', sans-serif">/opt/comfyui-python</text>
+<text x="960.0" y="310.0" fill="#7d8590" font-size="15" font-weight="500" text-anchor="middle" dominant-baseline="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', sans-serif">PYTHONUSERBASE</text>
+<path d="M486.0,296.0 L754.0,296.0" stroke="#7d8590" stroke-opacity="0.9" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M746.1,300.2 L754.0,296.0 L746.1,291.8" stroke="#7d8590" stroke-opacity="0.9" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="120.0" y="352.0" width="360.0" height="72.0" rx="14" fill="none" stroke="#7d8590" stroke-opacity="0.6" stroke-width="1.6"/>
+<g transform="translate(136.0,376.0) scale(1.000)" stroke="#7d8590" stroke-width="1.90" stroke-linecap="round" stroke-linejoin="round" fill="none"><path d="M3,4 h18 v16 h-18 z M3,16 l5,-5 l4,4 l3,-3 l6,6 M15,8 a1.5,1.5 0 1 0 0.01,0 z"/></g>
+<text x="320.0" y="377.0" fill="#7d8590" font-size="19" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', sans-serif">input/ · output/</text>
+<text x="320.0" y="402.0" fill="#7d8590" font-size="15" font-weight="500" text-anchor="middle" dominant-baseline="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', sans-serif">워크플로 · 생성 결과</text>
+<rect x="760.0" y="352.0" width="400.0" height="72.0" rx="14" fill="none" stroke="#7d8590" stroke-opacity="0.6" stroke-width="1.6"/>
+<text x="960.0" y="377.0" fill="#7d8590" font-size="18" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', sans-serif">/opt/ComfyUI/input · output</text>
+<text x="960.0" y="402.0" fill="#7d8590" font-size="15" font-weight="500" text-anchor="middle" dominant-baseline="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', sans-serif">이미지 · 영상 · 로그</text>
+<path d="M486.0,388.0 L754.0,388.0" stroke="#7d8590" stroke-opacity="0.9" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M746.1,392.2 L754.0,388.0 L746.1,383.8" stroke="#7d8590" stroke-opacity="0.9" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="120.0" y="444.0" width="360.0" height="72.0" rx="14" fill="none" stroke="#7d8590" stroke-opacity="0.6" stroke-width="1.6"/>
+<g transform="translate(136.0,468.0) scale(1.000)" stroke="#7d8590" stroke-width="1.90" stroke-linecap="round" stroke-linejoin="round" fill="none"><path d="M12,3 a4,4 0 1 0 0.01,0 z M4,22 a8,7 0 0 1 16,0"/></g>
+<text x="320.0" y="469.0" fill="#7d8590" font-size="19" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', sans-serif">user/</text>
+<text x="320.0" y="494.0" fill="#7d8590" font-size="15" font-weight="500" text-anchor="middle" dominant-baseline="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', sans-serif">설정 · DB</text>
+<rect x="760.0" y="444.0" width="400.0" height="72.0" rx="14" fill="none" stroke="#7d8590" stroke-opacity="0.6" stroke-width="1.6"/>
+<text x="960.0" y="469.0" fill="#7d8590" font-size="18" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', sans-serif">/opt/ComfyUI/user</text>
+<text x="960.0" y="494.0" fill="#7d8590" font-size="15" font-weight="500" text-anchor="middle" dominant-baseline="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', sans-serif">comfyui.db</text>
+<path d="M486.0,480.0 L754.0,480.0" stroke="#7d8590" stroke-opacity="0.9" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M746.1,484.2 L754.0,480.0 L746.1,475.8" stroke="#7d8590" stroke-opacity="0.9" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="120.0" y="536.0" width="360.0" height="72.0" rx="14" fill="none" stroke="#7d8590" stroke-opacity="0.6" stroke-width="1.6"/>
+<g transform="translate(136.0,560.0) scale(1.000)" stroke="#7d8590" stroke-width="1.90" stroke-linecap="round" stroke-linejoin="round" fill="none"><path d="M5,11 h14 v11 h-14 z M8,11 v-4 a4,4 0 0 1 8,0 v4"/></g>
+<text x="320.0" y="561.0" fill="#7d8590" font-size="19" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', sans-serif">caddy/</text>
+<text x="320.0" y="586.0" fill="#7d8590" font-size="15" font-weight="500" text-anchor="middle" dominant-baseline="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', sans-serif">Caddyfile · auth.hash</text>
+<rect x="760.0" y="536.0" width="400.0" height="72.0" rx="14" fill="none" stroke="#7d8590" stroke-opacity="0.6" stroke-width="1.6"/>
+<text x="960.0" y="561.0" fill="#7d8590" font-size="18" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', sans-serif">/etc/caddy/Caddyfile</text>
+<text x="960.0" y="586.0" fill="#7d8590" font-size="15" font-weight="500" text-anchor="middle" dominant-baseline="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', sans-serif">Basic Auth 설정 (읽기 전용)</text>
+<path d="M486.0,572.0 L754.0,572.0" stroke="#7d8590" stroke-opacity="0.9" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M746.1,576.2 L754.0,572.0 L746.1,567.8" stroke="#7d8590" stroke-opacity="0.9" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>

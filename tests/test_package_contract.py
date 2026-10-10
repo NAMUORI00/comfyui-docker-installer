@@ -40,10 +40,8 @@ def test_expected_repository_files_exist():
         "README.md",
         "docs/assets/comfyui-deployment-flow.svg",
         "docs/assets/comfyui-data-layout.svg",
-        "docs/a6000-2-preflight.md",
         "docs/compatibility.md",
         "docs/operations.md",
-        "docs/paperbanana-figures.md",
         ".gitignore",
     ]
     missing = [path for path in expected if not (ROOT / path).exists()]
@@ -92,13 +90,13 @@ def test_dockerfile_preserves_cuda_pytorch_and_uses_configurable_base():
     assert "USER ${COMFYUI_UID}:${COMFYUI_GID}" in dockerfile
 
 
-def test_env_defaults_match_a6000_2_preflight():
+def test_env_defaults_match_verified_baseline():
     env = read(".env.example")
     assert "COMFYUI_BASE_IMAGE=pytorch/pytorch:2.4.1-cuda12.1-cudnn9-runtime" in env
     assert "COMFYUI_REF=master" in env
     assert "COMFYUI_DATA_DIR=./data" in env
     assert "COMFYUI_BIND_HOST=0.0.0.0" in env
-    assert "CADDY_AUTH_USER=yskim" in env
+    assert "CADDY_AUTH_USER=admin" in env
     assert "CADDY_AUTH_PASSWORD" not in env
     assert "auth.hash" not in env
     assert "COMFYUI_UID=" in env
@@ -152,7 +150,7 @@ def test_install_script_detects_environment_and_generates_caddy_auth_files():
     assert "COMFYUI_BIND_HOST=${bind_host}" in install
     assert "CADDY_AUTH_USER=${auth_user}" in install
     assert "bind_host=\"${COMFYUI_BIND_HOST:-0.0.0.0}\"" in install
-    assert "auth_user=\"${CADDY_AUTH_USER:-yskim}\"" in install
+    assert "auth_user=\"${CADDY_AUTH_USER:-admin}\"" in install
     assert "auth_hash_file=\"${COMFYUI_DATA_DIR}/caddy/auth.hash\"" in install
     assert "caddy hash-password" in install
     assert "printf '%s\\n' \"$password\"" in install
@@ -234,47 +232,41 @@ def test_custom_node_dependency_scripts_install_requirements_into_user_base():
         assert "trusted custom nodes" in script
 
 
-def test_docs_describe_failure_rollback_and_github_packaging():
+def test_docs_describe_failure_and_rollback():
     readme = read("README.md")
     operations = read("docs/operations.md")
     compatibility = read("docs/compatibility.md")
     combined = "\n".join([readme, operations, compatibility])
-    assert "한국어 메인 / English sub notes" in readme
     assert "![ComfyUI Docker deployment flow](docs/assets/comfyui-deployment-flow.svg)" in readme
     assert "![ComfyUI persistent data layout](docs/assets/comfyui-data-layout.svg)" in readme
-    assert "PaperBanana-style figure notes" in readme
     for phrase in [
         "Failure criteria",
         "Rollback",
-        "GitHub",
         "Basic Auth",
         "install-custom-node-deps",
         "reset-python",
         "trusted custom nodes",
         "data/python",
-        "http://172.18.102.9:8188",
+        "http://<server-ip>:8188",
         "Docker daemon NVIDIA runtime",
         "CUDA 13",
     ]:
         assert phrase in combined
 
 
-def test_paperbanana_figure_assets_are_faithful_to_compose_contract():
+def test_figure_assets_are_faithful_to_compose_contract():
     deployment = read("docs/assets/comfyui-deployment-flow.svg")
     data_layout = read("docs/assets/comfyui-data-layout.svg")
-    notes = read("docs/paperbanana-figures.md")
     assert "0.0.0.0:8188" in deployment
     assert "comfyui:8188" in deployment
     assert "Basic Auth" in deployment
     assert "./data" in deployment
-    assert "3 GPUs detected" in deployment
+    assert "NVIDIA GPU" in deployment
     assert "/opt/comfyui-models" in data_layout
     assert "/opt/ComfyUI/custom_nodes" in data_layout
     assert "/opt/comfyui-python" in data_layout
     assert "/etc/caddy/Caddyfile" in data_layout
     assert "auth.hash" in data_layout
-    assert "PaperBanana-style Codex workflow" in notes
-    assert "path-label typo" in notes
 
 
 def test_shell_scripts_have_valid_syntax_and_executable_bits():
@@ -303,3 +295,10 @@ def test_no_placeholders_or_incompatible_cuda13_defaults():
             scanned.append(path)
             assert not forbidden.search(path.read_text(encoding="utf-8")), str(path)
     assert scanned
+
+
+def test_public_docs_do_not_expose_internal_host_details():
+    pattern = re.compile(r"(172\.(1[6-9]|2[0-9]|3[01])\.\d+\.\d+|A6000[-_]2|/home/[a-z]+)")
+    for path in ROOT.rglob("*"):
+        if path.is_file() and ".git" not in path.parts and path.suffix in {".md", ".svg", ".sh", ".ps1", ".example", ".yaml"}:
+            assert not pattern.search(path.read_text(encoding="utf-8")), str(path)
