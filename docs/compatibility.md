@@ -1,6 +1,6 @@
 # Compatibility
 
-## A6000-2 Baseline
+## Verified Baseline
 
 - OS: Ubuntu 22.04.5 LTS
 - GPU: 3 x NVIDIA RTX A6000
@@ -24,7 +24,7 @@ pytorch/pytorch:2.4.1-cuda12.1-cudnn9-runtime
 - CUDA major `12`, minor at least `1`: use CUDA 12.1 PyTorch runtime.
 - CUDA major `13`: use a CUDA 13 PyTorch runtime only after the host driver supports it.
 
-CUDA 13 is intentionally not the default for A6000-2. The observed driver reports CUDA 12.2, so a CUDA 13 image would be an avoidable compatibility risk.
+CUDA 13 is intentionally not the default for this baseline. The observed driver reports CUDA 12.2, so a CUDA 13 image would be an avoidable compatibility risk.
 
 ## Docker Runtime Requirement
 
@@ -52,4 +52,4 @@ Host data mounts default to `./data` on both platforms. Network binding defaults
 
 ## Docker Package Source Caveat
 
-On A6000-2, the host is Ubuntu Jammy while Docker's apt source points at Bionic. Do not upgrade Docker packages as part of this installer. Fix package sources separately if Docker upgrades are needed.
+On some hosts, Docker's apt source may point at an older Ubuntu release than the host OS. Do not upgrade Docker packages as part of this installer. Fix package sources separately if Docker upgrades are needed.

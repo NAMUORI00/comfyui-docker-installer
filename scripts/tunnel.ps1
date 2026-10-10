@@ -1,5 +1,5 @@
 param(
-    [string]$HostAlias = "A6000_2",
+    [string]$HostAlias = "gpu-server",
     [int]$LocalPort = 8188,
     [int]$RemotePort = 8188
 )

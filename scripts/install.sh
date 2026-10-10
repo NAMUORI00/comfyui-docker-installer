@@ -106,7 +106,7 @@ write_env() {
   user_spec="${COMFYUI_USER_SPEC:-$(normalize_uid_gid)}"
   bind_host="${COMFYUI_BIND_HOST:-0.0.0.0}"
   data_dir="${COMFYUI_DATA_DIR:-./data}"
-  auth_user="${CADDY_AUTH_USER:-yskim}"
+  auth_user="${CADDY_AUTH_USER:-admin}"
 
   cat > "$ENV_FILE" <<EOF
 COMFYUI_BASE_IMAGE=${COMFYUI_BASE_IMAGE:-$base_image}
@@ -207,7 +207,7 @@ read_auth_password() {
   fi
 
   local password
-  read -r -s -p "Caddy Basic Auth password for ${CADDY_AUTH_USER:-yskim}: " password
+  read -r -s -p "Caddy Basic Auth password for ${CADDY_AUTH_USER:-admin}: " password
   printf '\n' >&2
   printf '%s' "$password"
 }
@@ -216,7 +216,7 @@ write_caddy_config() {
   # shellcheck disable=SC1090
   . "$ENV_FILE"
   local auth_user auth_hash_file caddyfile auth_hash password
-  auth_user="${CADDY_AUTH_USER:-yskim}"
+  auth_user="${CADDY_AUTH_USER:-admin}"
   auth_hash_file="${COMFYUI_DATA_DIR}/caddy/auth.hash"
   caddyfile="${COMFYUI_DATA_DIR}/caddy/Caddyfile"
 

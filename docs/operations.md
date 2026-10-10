@@ -14,18 +14,18 @@ comfyui:
     - "8188"
 ```
 
-On A6000-2, open:
+From a machine on the same internal network, open:
 
 ```text
-http://172.18.102.9:8188
+http://<server-ip>:8188
 ```
 
-The browser prompts for Basic Auth before ComfyUI loads. Default username is `yskim`; set `CADDY_AUTH_USER` before running the installer to change it. The installer stores only the Caddy password hash in `data/caddy/auth.hash`.
+The browser prompts for Basic Auth before ComfyUI loads. Default username is `admin`; set `CADDY_AUTH_USER` before running the installer to change it. The installer stores only the Caddy password hash in `data/caddy/auth.hash`.
 
 For localhost-only Caddy access, set `COMFYUI_BIND_HOST=127.0.0.1` in `.env` and use an SSH tunnel:
 
 ```bash
-ssh -N -L 8188:127.0.0.1:8188 A6000_2
+ssh -N -L 8188:127.0.0.1:8188 <ssh-host>
 ```
 
 Do not expose this port outside the trusted internal network without an authenticated reverse proxy or firewall rule.

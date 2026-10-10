@@ -77,7 +77,7 @@ $bindHost = if ($env:COMFYUI_BIND_HOST) { $env:COMFYUI_BIND_HOST } else { '0.0.0
 
 $baseImage = if ($env:COMFYUI_BASE_IMAGE) { $env:COMFYUI_BASE_IMAGE } else { Detect-BaseImage }
 $dataPath = if ($env:COMFYUI_DATA_DIR) { $env:COMFYUI_DATA_DIR } else { $DataDir }
-$authUser = if ($env:CADDY_AUTH_USER) { $env:CADDY_AUTH_USER } else { 'yskim' }
+$authUser = if ($env:CADDY_AUTH_USER) { $env:CADDY_AUTH_USER } else { 'admin' }
 # Default emitted value: COMFYUI_DATA_DIR=./data
 
 @"
